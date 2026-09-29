@@ -49,6 +49,14 @@ function initDashboard(){
   });
 
   let planPromptShown = false;
+  let welcomeSkipped = false;
+
+  function actualizarVisibilidadDash(){
+    const sinPlan = !currentPlan;
+    document.getElementById("welcomeScreen").classList.toggle("hidden", !sinPlan || welcomeSkipped);
+    document.getElementById("dashContent").classList.toggle("hidden", sinPlan && !welcomeSkipped);
+  }
+
   function watchPlan(uid){
     db.collection("usuarios").doc(uid).onSnapshot(doc=>{
       const planId = (doc.exists && PLANES[doc.data().plan]) ? doc.data().plan : null;
@@ -62,19 +70,18 @@ function initDashboard(){
       } else {
         badge.textContent = "Sin plan";
         badge.classList.remove("pro");
-        // Recién registrado (o todavía sin pagar): le mostramos los planes directo,
-        // salvo que esté esperando la confirmación de un pago recién hecho.
+        // Recién registrado (o todavía sin pagar): si vino de la Home con un plan
+        // ya elegido, lo mandamos directo a pagar; si no, le mostramos la bienvenida.
         if(!planPromptShown && !volviendoDePago){
           planPromptShown = true;
           const planElegido = sessionStorage.getItem("planElegido");
           if(planElegido && PLANES[planElegido]){
             sessionStorage.removeItem("planElegido");
-            iniciarPago(planElegido, null);
-          } else {
-            abrirPlanes();
+            iniciarPago(planElegido, null, "welcomeErr");
           }
         }
       }
+      actualizarVisibilidadDash();
     }, err=>{
       console.error("No se pudo leer el plan del usuario:", err);
       document.getElementById("planBadge").textContent = "Error leyendo plan";
@@ -85,9 +92,14 @@ function initDashboard(){
   let cuponActivo = null;
 
   function resetPreciosVisuales(){
-    document.getElementById("priceStarter").innerHTML = `$${PRECIOS_BASE.starter.toLocaleString("es-AR")}<span>/mes</span>`;
-    document.getElementById("pricePro").innerHTML = `$${PRECIOS_BASE.pro.toLocaleString("es-AR")}<span>/mes</span>`;
-    document.getElementById("priceNegocio").innerHTML = `$${PRECIOS_BASE.negocio.toLocaleString("es-AR")}<span>/mes</span>`;
+    const valores = {
+      priceStarter: PRECIOS_BASE.starter, pricePro: PRECIOS_BASE.pro, priceNegocio: PRECIOS_BASE.negocio,
+      welcomePriceStarter: PRECIOS_BASE.starter, welcomePricePro: PRECIOS_BASE.pro, welcomePriceNegocio: PRECIOS_BASE.negocio
+    };
+    Object.entries(valores).forEach(([id, precio])=>{
+      const el = document.getElementById(id);
+      if(el) el.innerHTML = `$${precio.toLocaleString("es-AR")}<span>/mes</span>`;
+    });
   }
 
   function abrirPlanes(){
@@ -101,9 +113,14 @@ function initDashboard(){
   document.getElementById("upgradeBtn").onclick = abrirPlanes;
   document.getElementById("plansClose").onclick = ()=> document.getElementById("plansOverlay").classList.add("hidden");
 
-  document.getElementById("cuponAplicarBtn").onclick = async ()=>{
-    const codigo = document.getElementById("cuponInput").value.trim();
-    const msgEl = document.getElementById("cuponMsg");
+  document.getElementById("welcomeSkipBtn").onclick = ()=>{
+    welcomeSkipped = true;
+    actualizarVisibilidadDash();
+  };
+
+  async function aplicarCupon(codigoInputId, msgId){
+    const codigo = document.getElementById(codigoInputId).value.trim();
+    const msgEl = document.getElementById(msgId);
     if(!codigo){ msgEl.textContent = ""; return; }
     msgEl.textContent = "Revisando…";
     resetPreciosVisuales();
@@ -118,8 +135,12 @@ function initDashboard(){
         const data = await res.json();
         if(data.valido){
           algunoValido = true;
-          const el = document.getElementById(planId === "starter" ? "priceStarter" : planId === "pro" ? "pricePro" : "priceNegocio");
-          el.innerHTML = `<span style="text-decoration:line-through; font-size:15px; color:var(--ink-soft); font-weight:400;">$${data.precioBase.toLocaleString("es-AR")}</span> $${data.precioFinal.toLocaleString("es-AR")}<span>/mes</span>`;
+          const base = planId === "starter" ? "Starter" : planId === "pro" ? "Pro" : "Negocio";
+          const html = `<span style="text-decoration:line-through; font-size:15px; color:var(--ink-soft); font-weight:400;">$${data.precioBase.toLocaleString("es-AR")}</span> $${data.precioFinal.toLocaleString("es-AR")}<span>/mes</span>`;
+          const el1 = document.getElementById("price"+base);
+          const el2 = document.getElementById("welcomePrice"+base);
+          if(el1) el1.innerHTML = html;
+          if(el2) el2.innerHTML = html;
         }
       }catch(e){ /* seguimos con los otros planes */ }
     }
@@ -130,10 +151,12 @@ function initDashboard(){
       cuponActivo = null;
       msgEl.textContent = "Ese cupón no es válido o ya venció.";
     }
-  };
+  }
+  document.getElementById("cuponAplicarBtn").onclick = ()=> aplicarCupon("cuponInput", "cuponMsg");
+  document.getElementById("welcomeCuponBtn").onclick = ()=> aplicarCupon("welcomeCuponInput", "welcomeCuponMsg");
 
-  async function iniciarPago(planId, btn){
-    const errEl = document.getElementById("plansErr");
+  async function iniciarPago(planId, btn, errElId){
+    const errEl = document.getElementById(errElId || "plansErr");
     errEl.textContent = "";
     const original = btn ? btn.textContent : null;
     if(btn) btn.textContent = "Un segundo…";
@@ -160,7 +183,10 @@ function initDashboard(){
   }
 
   document.querySelectorAll("#plansOverlay [data-plan]").forEach(btn=>{
-    btn.onclick = ()=> iniciarPago(btn.dataset.plan, btn);
+    btn.onclick = ()=> iniciarPago(btn.dataset.plan, btn, "plansErr");
+  });
+  document.querySelectorAll("#welcomeScreen [data-welcomeplan]").forEach(btn=>{
+    btn.onclick = ()=> iniciarPago(btn.dataset.welcomeplan, btn, "welcomeErr");
   });
 
   document.getElementById("logoutBtn").onclick = ()=> auth.signOut();

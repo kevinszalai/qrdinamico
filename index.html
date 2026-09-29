@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://firestore.googleapis.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=4">
+<link rel="stylesheet" href="css/styles.css?v=6">
 </head>
 <body>
 
@@ -370,15 +370,58 @@
     <div id="proBanner" class="probanner hidden">
       <p><b>Estamos confirmando tu pago con Mercado Pago.</b> En cuanto se acredite, tu plan se activa solo — no hace falta que hagas nada más.</p>
     </div>
-    <div class="topbar">
-      <h2>Tus códigos</h2>
-      <button class="btn" id="newQrBtn">+ Nuevo QR</button>
+
+    <!-- Pantalla de bienvenida para quien todavía no eligió plan -->
+    <div id="welcomeScreen" class="welcome hidden">
+      <div class="welcome-head">
+        <span class="welcome-badge">✓ Cuenta creada</span>
+        <h2 class="display">¡Bienvenido! Elegí tu plan para empezar</h2>
+        <p class="welcome-sub">Los QR dinámicos (los que podés editar después de imprimirlos) necesitan un plan. Elegí el que se ajuste a lo que necesitás — podés cambiarlo cuando quieras.</p>
+      </div>
+
+      <div class="couponrow">
+        <input id="welcomeCuponInput" placeholder="¿Tenés un cupón?">
+        <button class="btn small ghost" id="welcomeCuponBtn">Aplicar</button>
+      </div>
+      <p class="sub" id="welcomeCuponMsg" style="text-align:center; min-height:16px; margin-top:6px;"></p>
+
+      <div class="plansgrid">
+        <div class="plancard">
+          <h4>Starter</h4>
+          <p class="planprice" id="welcomePriceStarter">$4.999<span>/mes</span></p>
+          <p class="planlimit">hasta 5 QR dinámicos</p>
+          <button class="btn ghost" data-welcomeplan="starter" style="width:100%; justify-content:center;">Elegir Starter</button>
+        </div>
+        <div class="plancard featured">
+          <span class="planbadgepop">más elegido</span>
+          <h4>Pro</h4>
+          <p class="planprice" id="welcomePricePro">$9.999<span>/mes</span></p>
+          <p class="planlimit">hasta 20 QR dinámicos</p>
+          <button class="btn" data-welcomeplan="pro" style="width:100%; justify-content:center;">Elegir Pro</button>
+        </div>
+        <div class="plancard">
+          <h4>Negocio</h4>
+          <p class="planprice" id="welcomePriceNegocio">$19.999<span>/mes</span></p>
+          <p class="planlimit">QR dinámicos ilimitados</p>
+          <button class="btn ghost" data-welcomeplan="negocio" style="width:100%; justify-content:center;">Elegir Negocio</button>
+        </div>
+      </div>
+      <div class="err" id="welcomeErr" style="text-align:center; margin-top:14px;"></div>
+      <p class="welcome-skip">¿Solo querés mirar? <button id="welcomeSkipBtn">Ver el panel igual</button></p>
     </div>
 
-    <div id="qrGrid" class="grid"></div>
-    <div id="emptyState" class="empty hidden">
-      <b>Todavía no creaste ningún QR</b>
-      Generá el primero y empezá a trackear escaneos en tiempo real.
+    <!-- Dashboard normal, una vez que hay plan (o si el usuario eligió "ver igual") -->
+    <div id="dashContent">
+      <div class="topbar">
+        <h2>Tus códigos</h2>
+        <button class="btn" id="newQrBtn">+ Nuevo QR</button>
+      </div>
+
+      <div id="qrGrid" class="grid"></div>
+      <div id="emptyState" class="empty hidden">
+        <b>Todavía no creaste ningún QR</b>
+        Generá el primero y empezá a trackear escaneos en tiempo real.
+      </div>
     </div>
   </div>
 </div>
@@ -696,12 +739,12 @@
   </div>
 </div>
 
-<script src="js/core.js?v=4"></script>
-<script src="js/qr-core.js?v=4"></script>
-<script src="js/home.js?v=4"></script>
-<script src="js/demo.js?v=4"></script>
-<script src="js/dashboard.js?v=4"></script>
-<script src="js/admin.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/core.js?v=6"></script>
+<script src="js/qr-core.js?v=6"></script>
+<script src="js/home.js?v=6"></script>
+<script src="js/demo.js?v=6"></script>
+<script src="js/dashboard.js?v=6"></script>
+<script src="js/admin.js?v=6"></script>
+<script src="js/app.js?v=6"></script>
 </body>
 </html>
