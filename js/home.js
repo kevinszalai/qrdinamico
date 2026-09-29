@@ -141,6 +141,7 @@ function wireAuthUI(){
     document.getElementById("authSubmit").textContent = isRegisterMode ? "Crear cuenta" : "Entrar";
     document.getElementById("authSwitchLabel").textContent = isRegisterMode ? "¿Ya tenés cuenta?" : "¿No tenés cuenta?";
     document.getElementById("authSwitchBtn").textContent = isRegisterMode ? "Iniciar sesión" : "Crear una";
+    document.getElementById("termsField").style.display = isRegisterMode ? "block" : "none";
     document.getElementById("authErr").textContent = "";
   }
   function showAuth(registerMode){
@@ -180,6 +181,10 @@ function wireAuthUI(){
     errEl.textContent = "";
     if(!auth){ errEl.textContent = "Un segundo, todavía estamos cargando…"; return; }
     if(!email || !pass){ errEl.textContent = "Completá email y contraseña."; return; }
+    if(isRegisterMode && !document.getElementById("authTerms").checked){
+      errEl.textContent = "Tenés que aceptar los Términos y Condiciones para crear tu cuenta.";
+      return;
+    }
     try{
       if(isRegisterMode){
         await auth.createUserWithEmailAndPassword(email, pass);
@@ -195,6 +200,10 @@ function wireAuthUI(){
     const errEl = document.getElementById("authErr");
     errEl.textContent = "";
     if(!auth){ errEl.textContent = "Un segundo, todavía estamos cargando…"; return; }
+    if(isRegisterMode && !document.getElementById("authTerms").checked){
+      errEl.textContent = "Tenés que aceptar los Términos y Condiciones para crear tu cuenta.";
+      return;
+    }
     try{
       const provider = new firebase.auth.GoogleAuthProvider();
       await auth.signInWithPopup(provider);

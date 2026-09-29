@@ -2,9 +2,12 @@
 const params = new URLSearchParams(window.location.search);
 const scanId = params.get("r");
 
-const esRutaAdmin = new URLSearchParams(window.location.search).get("admin") === "1";
+const esRutaAdmin = params.get("admin") === "1";
+const esRutaTerminos = params.get("terminos") === "1";
 
-if(!configOk){
+if(esRutaTerminos){
+  document.getElementById("terminosView").classList.remove("hidden");
+} else if(!configOk){
   document.getElementById("setupView").classList.remove("hidden");
   document.getElementById("viewDemoBtn").onclick = ()=>{
     loadScript("https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js").then(enterDemoMode);

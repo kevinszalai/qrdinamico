@@ -299,6 +299,13 @@
   .featcard h3{font-size:16px; font-weight:600; margin-bottom:6px;}
   .featcard p{font-size:13.5px; color:var(--ink-soft); line-height:1.5;}
 
+  .legalwrap{ max-width:680px; margin:0 auto; padding:48px 24px 80px; line-height:1.6; }
+  .legalwrap h1{ font-size:28px; font-weight:600; margin-bottom:6px; }
+  .legalwrap h2{ font-size:18px; font-weight:600; margin:32px 0 10px; }
+  .legalwrap p{ font-size:14.5px; color:var(--ink-soft); margin-bottom:12px; }
+  .legalwrap ul{ margin:0 0 12px 20px; }
+  .legalwrap li{ font-size:14.5px; color:var(--ink-soft); margin-bottom:8px; }
+
   .homefooter{
     border-top:1px solid var(--line); padding:40px 24px 56px; text-align:center;
   }

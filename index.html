@@ -165,6 +165,7 @@
   <footer class="homefooter">
     <p>¿Ya tenés cuenta?</p>
     <button class="btn ghost" id="footerLoginBtn">Entrar a mi panel</button>
+    <p style="margin-top:20px;"><a href="?terminos=1" style="color:var(--ink-soft); font-size:12.5px; text-decoration:underline;">Términos y Condiciones</a></p>
   </footer>
 </div>
 
@@ -225,6 +226,12 @@
       <label>Contraseña</label>
       <input type="password" id="authPass" placeholder="••••••••">
     </div>
+    <div class="field" id="termsField" style="display:none; margin-top:-6px;">
+      <label style="display:flex; align-items:flex-start; gap:8px; text-transform:none; font-weight:400; font-size:12.5px; color:var(--ink-soft);">
+        <input type="checkbox" id="authTerms" style="margin-top:3px;">
+        Acepto los <a href="?terminos=1" target="_blank" style="color:var(--ink); text-decoration:underline; margin-left:3px;">Términos y Condiciones</a>
+      </label>
+    </div>
     <button class="btn" id="authSubmit" style="width:100%; justify-content:center;">Entrar</button>
     <div class="err" id="authErr"></div>
     <div style="display:flex; align-items:center; gap:10px; margin:16px 0; color:var(--ink-soft); font-size:12px;">
@@ -240,6 +247,46 @@
       <span id="authSwitchLabel">¿No tenés cuenta?</span>
       <button id="authSwitchBtn">Crear una</button>
     </div>
+  </div>
+</div>
+
+<!-- ============ TÉRMINOS Y CONDICIONES ============ -->
+<div id="terminosView" class="hidden">
+  <div class="legalwrap">
+    <a href="javascript:history.back()" class="backlink" style="position:static; display:inline-block; margin-bottom:22px;">← volver</a>
+    <h1>Términos y Condiciones</h1>
+    <p class="sub" style="margin-bottom:28px;">QR Tresna · última actualización: 29 de septiembre de 2026</p>
+
+    <h2>1. Objeto y aceptación</h2>
+    <p>Estos Términos y Condiciones regulan el uso de la plataforma QR Tresna (en adelante, "el Servicio"), operada por Tresna, que permite generar códigos QR estáticos (de uso gratuito) y códigos QR dinámicos (bajo planes pagos), cuyo contenido de destino puede ser editado por el usuario luego de su creación.</p>
+    <p>Al crear una cuenta o utilizar el Servicio, el usuario declara haber leído, comprendido y aceptado estos Términos en su totalidad. Si no está de acuerdo, debe abstenerse de usar el Servicio.</p>
+    <p>Tresna se reserva el derecho de modificar estos Términos en cualquier momento. Los cambios se consideran aceptados por el uso continuado del Servicio con posterioridad a su publicación.</p>
+
+    <h2>2. Planes, pagos, cupones y cancelación</h2>
+    <p>El Servicio ofrece un nivel gratuito (QR estático, sin necesidad de cuenta) y planes pagos (Starter, Pro y Negocio) que habilitan QR dinámicos, con límites de cantidad y funcionalidades según el plan contratado, detallados en la página de precios vigente al momento de la contratación.</p>
+    <p>Los pagos se procesan a través de Mercado Pago, en pesos argentinos, mediante suscripción recurrente mensual. El usuario autoriza el cobro automático mientras la suscripción esté activa. La cancelación puede solicitarse en cualquier momento y tiene efecto a partir del próximo período de facturación; no se realizan reintegros por el período ya iniciado, salvo que la normativa aplicable disponga lo contrario.</p>
+    <p>Los cupones de descuento son válidos únicamente durante el período y en los planes que Tresna determine al momento de su emisión, y pueden ser modificados o dados de baja sin previo aviso.</p>
+    <p>Si el pago de una suscripción no se acredita, Tresna puede suspender el acceso a las funcionalidades del plan correspondiente hasta que se regularice la situación.</p>
+
+    <h2>3. Responsabilidad sobre el contenido cargado</h2>
+    <p>El usuario es el único responsable del contenido que carga al crear un código QR, ya sea una URL, datos de contacto, texto, credenciales de red WiFi, o cualquier otro destino habilitado por el Servicio. Tresna no controla, valida ni aprueba dicho contenido antes de su publicación.</p>
+    <p>El usuario se compromete a no utilizar el Servicio para generar códigos QR que dirijan a contenido ilegal, fraudulento, difamatorio, que infrinja derechos de terceros, o que de cualquier forma viole la legislación vigente. Tresna se reserva el derecho de suspender o eliminar cualquier código QR que incumpla esta cláusula, sin necesidad de aviso previo.</p>
+
+    <h2>4. Limitación de responsabilidad</h2>
+    <p>Tresna provee la infraestructura para generar y redirigir códigos QR, pero no tiene control sobre:</p>
+    <ul>
+      <li>El uso físico que el usuario le dé al código impreso (ubicación, cantidad de copias, soportes en los que lo coloque, ni el momento en que decida retirarlo de circulación).</li>
+      <li>El contenido de los sitios de terceros a los que un QR redirige, incluyendo cambios que esos sitios sufran después de la creación del código.</li>
+      <li>Que un tercero (no el usuario) modifique el destino de un QR dinámico si obtiene acceso no autorizado a la cuenta.</li>
+    </ul>
+    <p>En consecuencia, Tresna no será responsable por daños directos, indirectos, incidentales o de cualquier tipo derivados de: (a) la impresión, distribución o uso físico de un código QR generado a través del Servicio; (b) el contenido al que un código QR redirija, sea al momento de su creación o en cualquier momento posterior; (c) la interrupción, demora o falla del Servicio por causas ajenas a Tresna, incluyendo fallas de terceros (Firebase, Mercado Pago, proveedores de hosting o conectividad).</p>
+    <p>El Servicio se presta "tal cual está disponible", sin garantías de funcionamiento ininterrumpido o libre de errores.</p>
+
+    <h2>5. Datos personales y privacidad</h2>
+    <p>Tresna recolecta el email del usuario (para la cuenta), datos de contacto que el usuario cargue voluntariamente en QR de tipo vCard, y datos de uso básicos (cantidad de escaneos por código). Estos datos se utilizan exclusivamente para el funcionamiento del Servicio y no se comparten con terceros salvo obligación legal o para procesar pagos (Mercado Pago).</p>
+
+    <h2>6. Legislación aplicable y jurisdicción</h2>
+    <p>El Servicio se ofrece actualmente para usuarios en Argentina, con pagos procesados en pesos argentinos a través de Mercado Pago. Estos Términos se rigen por las leyes de la República Argentina. Para cualquier controversia derivada del uso del Servicio, las partes se someten a la jurisdicción de los tribunales ordinarios de la Ciudad Autónoma de Buenos Aires, con renuncia expresa a cualquier otro fuero que pudiera corresponder.</p>
   </div>
 </div>
 
