@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR · Tresna</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F5F3ED;
+    --paper-dim:#EAE7DD;
+    --ink:#14171B;
+    --ink-soft:#4B5158;
+    --signal:#FF4B3E;
+    --signal-dim:#FFEAE7;
+    --line:#D8D4C8;
+    --ok:#0E7C6B;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .display{font-family:'Space Grotesk', sans-serif;}
+
+  /* ---------- utility ---------- */
+  .hidden{display:none !important;}
+  button{font-family:inherit; cursor:pointer; border:none;}
+  input,select{font-family:inherit;}
+
+  /* ---------- scan header signature ---------- */
+  .scanhead{
+    position:relative;
+    border-bottom:1px solid var(--line);
+    padding:22px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+    overflow:hidden;
+    background:var(--paper);
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .matrix{
+    width:34px; height:34px;
+    display:grid; grid-template-columns:repeat(5,1fr); grid-template-rows:repeat(5,1fr);
+    gap:2px;
+  }
+  .matrix span{background:var(--ink); border-radius:1px; opacity:0;
+    animation:reveal 1.2s ease forwards;}
+  @keyframes reveal{ to{opacity:1;} }
+  .brand h1{font-size:19px; font-weight:600; letter-spacing:-0.01em;}
+  .brand small{display:block; font-size:11px; color:var(--ink-soft); letter-spacing:.06em; text-transform:uppercase; margin-top:1px;}
+  .scanline{
+    position:absolute; left:0; top:0; height:2px; width:100%;
+    background:linear-gradient(90deg, transparent, var(--signal), transparent);
+    animation:sweep 3.5s ease-in-out infinite;
+  }
+  @keyframes sweep{
+    0%{ transform:translateY(0); opacity:0;}
+    10%{opacity:1;}
+    50%{ transform:translateY(64px); opacity:.6;}
+    90%{opacity:1;}
+    100%{ transform:translateY(0); opacity:0;}
+  }
+  .userchip{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--ink-soft);}
+  .userchip button{background:none; color:var(--ink-soft); text-decoration:underline; font-size:13px;}
+
+  /* ---------- layout ---------- */
+  .wrap{max-width:960px; margin:0 auto; padding:32px 24px 80px;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;}
+  .topbar h2{font-size:22px; font-weight:600;}
+  .btn{
+    background:var(--ink); color:var(--paper); padding:11px 18px; border-radius:8px;
+    font-size:14px; font-weight:500; display:inline-flex; align-items:center; gap:8px;
+    transition:transform .12s ease, background .12s ease;
+  }
+  .btn:hover{background:#000;}
+  .btn:active{transform:scale(.97);}
+  .btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line);}
+  .btn.ghost:hover{background:var(--paper-dim);}
+  .btn.danger{background:transparent; color:var(--signal); border:1px solid var(--signal);}
+  .btn.danger:hover{background:var(--signal-dim);}
+  .btn.small{padding:7px 12px; font-size:12.5px; border-radius:6px;}
+
+  /* ---------- grid of qrs ---------- */
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:14px;}
+  .card{
+    background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .tag{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; font-weight:600;
+    padding:3px 8px; border-radius:20px; background:var(--paper-dim); color:var(--ink-soft);
+  }
+  .tag.url{color:#1A5CB0; background:#E9F1FC;}
+  .tag.vcard{color:#7A3FA0; background:#F3E9FA;}
+  .tag.wifi{color:var(--ok); background:#E4F5F0;}
+  .status-dot{width:8px; height:8px; border-radius:50%; background:#C9C4B4; flex-shrink:0;}
+  .status-dot.on{background:var(--ok);}
+  .card h3{font-size:15px; font-weight:600; line-height:1.3;}
+  .card .dest{font-size:12.5px; color:var(--ink-soft); word-break:break-all;}
+  .card-stats{display:flex; gap:14px; font-size:12px; color:var(--ink-soft); border-top:1px dashed var(--line); padding-top:10px;}
+  .card-stats b{color:var(--ink); font-family:'IBM Plex Mono', monospace; font-weight:600;}
+  .card-actions{display:flex; gap:8px; flex-wrap:wrap;}
+
+  .empty{
+    border:1px dashed var(--line); border-radius:12px; padding:48px 24px; text-align:center; color:var(--ink-soft);
+  }
+  .empty b{color:var(--ink); display:block; font-size:16px; margin-bottom:6px;}
+
+  /* ---------- modal ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,23,27,.45); display:flex; align-items:center; justify-content:center;
+    z-index:50; padding:16px;
+  }
+  .modal{
+    background:var(--paper); border-radius:14px; width:100%; max-width:460px; max-height:90vh; overflow-y:auto;
+    padding:26px; border:1px solid var(--line);
+  }
+  .modal h3{font-size:18px; font-weight:600; margin-bottom:4px;}
+  .modal p.sub{font-size:13px; color:var(--ink-soft); margin-bottom:18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
+  .field input, .field select{
+    width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:#fff; font-size:14px;
+  }
+  .field input:focus, .field select:focus{outline:2px solid var(--ink); outline-offset:1px;}
+  .typegrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px;}
+  .typebtn{
+    padding:12px 8px; border:1px solid var(--line); border-radius:8px; background:#fff; text-align:center; font-size:12.5px; font-weight:500;
+  }
+  .typebtn.active{border-color:var(--ink); background:var(--ink); color:var(--paper);}
+  .modal-actions{display:flex; gap:10px; margin-top:18px;}
+  .modal-actions .btn{flex:1; justify-content:center;}
+
+  /* ---------- qr detail ---------- */
+  .qrpreview{display:flex; flex-direction:column; align-items:center; gap:12px; padding:20px 0;}
+  #qrcanvas{border:1px solid var(--line); border-radius:8px; padding:12px; background:#fff;}
+  .linkbox{
+    display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line); border-radius:8px;
+    padding:8px 10px; font-size:12.5px; width:100%;
+  }
+  .linkbox span{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'IBM Plex Mono',monospace;}
+
+  /* ---------- auth ---------- */
+  .authwrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .authcard{width:100%; max-width:380px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:32px;}
+  .authcard .matrix{margin-bottom:18px;}
+  .authcard h1{font-size:22px; font-weight:600; margin-bottom:4px;}
+  .authcard p.sub{font-size:13px; color:var(--ink-soft); margin-bottom:22px;}
+  .authtoggle{display:flex; gap:6px; font-size:13px; margin-top:16px; color:var(--ink-soft);}
+  .authtoggle button{background:none; color:var(--ink); text-decoration:underline; font-weight:500;}
+  .err{color:var(--signal); font-size:12.5px; margin-top:8px; min-height:16px;}
+
+  /* ---------- redirect view ---------- */
+  .redirectwrap{min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; text-align:center; padding:24px;}
+  .pulse{width:56px; height:56px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--signal); animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .vcarddone, .wifidone{max-width:360px;}
+  .wifidone .pass{font-family:'IBM Plex Mono',monospace; background:#fff; border:1px solid var(--line); padding:10px 14px; border-radius:8px; margin-top:10px; font-size:15px; letter-spacing:.03em;}
+
+  @media(max-width:520px){
+    .wrap{padding:24px 16px 60px;}
+    .scanhead{padding:16px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ CONFIG ============ -->
+<script>
+  // 1) Pegá acá la config de tu proyecto Firebase (Firestore + Authentication con Email/Password habilitado)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDA1VtlYJ15Hkl-tsMhA5qSkv941M7HZfY",
+    authDomain: "qrdinamico-240ac.firebaseapp.com",
+    projectId: "qrdinamico-240ac",
+    storageBucket: "qrdinamico-240ac.firebasestorage.app",
+    messagingSenderId: "254871661299",
+    appId: "1:254871661299:web:e04bcfa1e3b5f3ac2ca586"
+  };
+  // 2) URL base donde vas a alojar este archivo (GitHub Pages, etc). Sin barra final.
+  const BASE_URL = "https://kevinszalai.github.io/tresna-qr";
+
+  let auth, db, configOk = true;
+  try{
+    if(firebaseConfig.apiKey === "TU_API_KEY"){ throw new Error("config-placeholder"); }
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+  }catch(e){
+    configOk = false;
+  }
+</script>
+
+<!-- ============ AUTH VIEW ============ -->
+<div id="authView" class="authwrap hidden">
+  <div class="authcard">
+    <div class="matrix" id="authMatrix"></div>
+    <h1 id="authTitle">Iniciar sesión</h1>
+    <p class="sub">Tu panel de códigos QR dinámicos.</p>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="authEmail" placeholder="vos@ejemplo.com">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="authPass" placeholder="••••••••">
+    </div>
+    <button class="btn" id="authSubmit" style="width:100%; justify-content:center;">Entrar</button>
+    <div class="err" id="authErr"></div>
+    <div class="authtoggle">
+      <span id="authSwitchLabel">¿No tenés cuenta?</span>
+      <button id="authSwitchBtn">Crear una</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD VIEW ============ -->
+<div id="dashView" class="hidden">
+  <div class="scanhead">
+    <div class="scanline"></div>
+    <div class="brand">
+      <div class="matrix" id="headMatrix"></div>
+      <div>
+        <h1>QR · Tresna</h1>
+        <small>códigos dinámicos</small>
+      </div>
+    </div>
+    <div class="userchip">
+      <span id="userEmail"></span>
+      <button id="logoutBtn">salir</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="topbar">
+      <h2>Tus códigos</h2>
+      <button class="btn" id="newQrBtn">+ Nuevo QR</button>
+    </div>
+
+    <div id="qrGrid" class="grid"></div>
+    <div id="emptyState" class="empty hidden">
+      <b>Todavía no creaste ningún QR</b>
+      Generá el primero y empezá a trackear escaneos en tiempo real.
+    </div>
+  </div>
+</div>
+
+<!-- ============ CREATE/EDIT MODAL ============ -->
+<div id="modalOverlay" class="overlay hidden">
+  <div class="modal">
+    <h3 id="modalTitle">Nuevo QR</h3>
+    <p class="sub">Elegí el tipo de destino. Podés cambiarlo cuando quieras sin reimprimir el código.</p>
+
+    <div class="typegrid">
+      <button class="typebtn active" data-type="url">🔗 URL</button>
+      <button class="typebtn" data-type="vcard">👤 Contacto</button>
+      <button class="typebtn" data-type="wifi">📶 WiFi</button>
+    </div>
+
+    <div class="field">
+      <label>Nombre interno</label>
+      <input id="fNombre" placeholder="Ej: Flyer evento noviembre">
+    </div>
+
+    <!-- URL fields -->
+    <div id="fields-url">
+      <div class="field">
+        <label>URL de destino</label>
+        <input id="fUrl" placeholder="https://...">
+      </div>
+    </div>
+
+    <!-- vCard fields -->
+    <div id="fields-vcard" class="hidden">
+      <div class="field"><label>Nombre completo</label><input id="fVName" placeholder="Kevin Szalai"></div>
+      <div class="field"><label>Teléfono</label><input id="fVPhone" placeholder="+54 9 11 ..."></div>
+      <div class="field"><label>Email</label><input id="fVEmail" placeholder="vos@ejemplo.com"></div>
+      <div class="field"><label>Empresa (opcional)</label><input id="fVOrg" placeholder="Tresna"></div>
+    </div>
+
+    <!-- Wifi fields -->
+    <div id="fields-wifi" class="hidden">
+      <div class="field"><label>Nombre de red (SSID)</label><input id="fWSsid" placeholder="MiRed_5G"></div>
+      <div class="field"><label>Contraseña</label><input id="fWPass" placeholder="••••••••"></div>
+      <div class="field">
+        <label>Seguridad</label>
+        <select id="fWSec">
+          <option value="WPA">WPA/WPA2</option>
+          <option value="WEP">WEP</option>
+          <option value="nopass">Abierta (sin contraseña)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="err" id="modalErr"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="modalCancel">Cancelar</button>
+      <button class="btn" id="modalSave">Guardar y generar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ QR DETAIL MODAL ============ -->
+<div id="detailOverlay" class="overlay hidden">
+  <div class="modal">
+    <h3 id="detailTitle">Tu QR</h3>
+    <p class="sub">Descargalo o copiá el link. El destino se puede editar después desde la tarjeta.</p>
+    <div class="qrpreview">
+      <div id="qrcanvas"></div>
+      <div class="linkbox">
+        <span id="detailLink"></span>
+        <button class="btn small ghost" id="copyLinkBtn">Copiar</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="detailClose">Cerrar</button>
+      <button class="btn" id="downloadBtn">Descargar PNG</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REDIRECT VIEW ============ -->
+<div id="redirectView" class="redirectwrap hidden">
+  <div id="redirectSpinner" class="pulse"></div>
+  <div id="redirectContent"></div>
+</div>
+
+<!-- ============ SETUP NEEDED VIEW ============ -->
+<div id="setupView" class="authwrap hidden">
+  <div class="authcard" style="max-width:440px;">
+    <div class="matrix" id="setupMatrix"></div>
+    <h1>Falta conectar Firebase</h1>
+    <p class="sub" style="margin-bottom:14px;">Este archivo todavía tiene la configuración de ejemplo. Para verlo funcionando:</p>
+    <ol style="font-size:13.5px; color:var(--ink-soft); line-height:1.7; padding-left:18px;">
+      <li>Creá un proyecto en <span class="mono" style="color:var(--ink);">console.firebase.google.com</span></li>
+      <li>Activá <b style="color:var(--ink);">Authentication → Email/Password</b></li>
+      <li>Activá <b style="color:var(--ink);">Firestore Database</b></li>
+      <li>Copiá el objeto <span class="mono" style="color:var(--ink);">firebaseConfig</span> del proyecto y pegalo al inicio de este archivo, reemplazando los valores de ejemplo</li>
+    </ol>
+    <button class="btn ghost" id="viewDemoBtn" style="width:100%; justify-content:center; margin-top:20px;">Ver el diseño con datos de muestra →</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   HELPERS: matriz de puntos decorativa (signature element)
+========================================================= */
+function paintMatrix(el){
+  if(!el) return;
+  el.innerHTML = "";
+  const cells = 25;
+  const active = new Set();
+  while(active.size < 14){ active.add(Math.floor(Math.random()*cells)); }
+  for(let i=0;i<cells;i++){
+    const s = document.createElement("span");
+    if(active.has(i)){
+      s.style.animationDelay = (Math.random()*0.9)+"s";
+    } else {
+      s.style.background = "transparent";
+    }
+    el.appendChild(s);
+  }
+}
+paintMatrix(document.getElementById("headMatrix"));
+paintMatrix(document.getElementById("authMatrix"));
+
+/* =========================================================
+   ROUTING: ¿esta carga es un escaneo (r=ID) o el dashboard?
+========================================================= */
+paintMatrix(document.getElementById("setupMatrix"));
+
+const params = new URLSearchParams(window.location.search);
+const scanId = params.get("r");
+
+const DEMO_QRS = [
+  { id:"d1", nombre:"Flyer evento LADEVI", tipo:"url", activo:true, escaneos:132,
+    destino:{ url:"https://universal-assistance.com/ladevi2026" } },
+  { id:"d2", nombre:"Tarjeta Kevin Szalai", tipo:"vcard", activo:true, escaneos:47,
+    destino:{ nombre:"Kevin Szalai", telefono:"+54 9 11 5607 5594", email:"kevinszalai@hotmail.com", org:"Tresna" } },
+  { id:"d3", nombre:"WiFi oficina Villa Crespo", tipo:"wifi", activo:false, escaneos:9,
+    destino:{ ssid:"Tresna_Studio", password:"clave-segura-01", seguridad:"WPA" } },
+  { id:"d4", nombre:"Menú mostrador", tipo:"url", activo:true, escaneos:301,
+    destino:{ url:"https://tresna.app/menu" } }
+];
+
+function enterDemoMode(){
+  document.getElementById("setupView").classList.add("hidden");
+  document.getElementById("dashView").classList.remove("hidden");
+  document.getElementById("userEmail").textContent = "demo@tresna.app";
+  document.getElementById("logoutBtn").textContent = "salir de la demo";
+  document.getElementById("logoutBtn").onclick = ()=> location.reload();
+  document.getElementById("newQrBtn").onclick = ()=> alert("Esto es una vista de muestra. Conectá tu Firebase para crear QRs de verdad.");
+
+  const grid = document.getElementById("qrGrid");
+  const empty = document.getElementById("emptyState");
+  empty.classList.add("hidden");
+  grid.innerHTML = "";
+
+  DEMO_QRS.forEach(d=>{
+    const el = document.createElement("div");
+    el.className = "card";
+    const destinoTexto = d.tipo==="url" ? d.destino.url
+      : d.tipo==="vcard" ? `${d.destino.nombre} · ${d.destino.telefono||""}`
+      : `Red: ${d.destino.ssid}`;
+    el.innerHTML = `
+      <div class="card-top">
+        <span class="tag ${d.tipo}">${d.tipo}</span>
+        <span class="status-dot ${d.activo?'on':''}" title="${d.activo?'activo':'pausado'}"></span>
+      </div>
+      <h3>${d.nombre}</h3>
+      <div class="dest">${destinoTexto}</div>
+      <div class="card-stats"><div>escaneos <b>${d.escaneos}</b></div></div>
+      <div class="card-actions">
+        <button class="btn small ghost" data-act="view">Ver QR</button>
+        <button class="btn small ghost" data-act="edit">Editar</button>
+        <button class="btn small ghost" data-act="toggle">${d.activo?'Pausar':'Activar'}</button>
+        <button class="btn small danger" data-act="delete">Borrar</button>
+      </div>
+    `;
+    const demoAlert = ()=> alert("Esto es una vista de muestra. Conectá tu Firebase para editar de verdad.");
+    el.querySelector('[data-act="edit"]').onclick = demoAlert;
+    el.querySelector('[data-act="toggle"]').onclick = demoAlert;
+    el.querySelector('[data-act="delete"]').onclick = demoAlert;
+    el.querySelector('[data-act="view"]').onclick = ()=>{
+      document.getElementById("detailTitle").textContent = d.nombre;
+      const link = `${BASE_URL}?r=${d.id}`;
+      document.getElementById("detailLink").textContent = link;
+      const holder = document.getElementById("qrcanvas");
+      holder.innerHTML = "";
+      new QRCode(holder, { text: link, width:220, height:220, colorDark:"#14171B", colorLight:"#ffffff", correctLevel: QRCode.CorrectLevel.M });
+      document.getElementById("detailOverlay").classList.remove("hidden");
+    };
+    grid.appendChild(el);
+  });
+}
+
+// wiring del modal de detalle (compartido entre demo y modo real)
+document.getElementById("detailClose").onclick = ()=> document.getElementById("detailOverlay").classList.add("hidden");
+document.getElementById("copyLinkBtn").onclick = ()=>{
+  navigator.clipboard.writeText(document.getElementById("detailLink").textContent);
+  const b = document.getElementById("copyLinkBtn");
+  const old = b.textContent; b.textContent = "¡Copiado!";
+  setTimeout(()=> b.textContent = old, 1200);
+};
+document.getElementById("downloadBtn").onclick = ()=>{
+  const img = document.querySelector("#qrcanvas img") || document.querySelector("#qrcanvas canvas");
+  const a = document.createElement("a");
+  a.download = "qr.png";
+  a.href = img.tagName === "CANVAS" ? img.toDataURL("image/png") : img.src;
+  a.click();
+};
+
+if(!configOk){
+  document.getElementById("setupView").classList.remove("hidden");
+  document.getElementById("viewDemoBtn").onclick = enterDemoMode;
+} else if(scanId){
+  runRedirectFlow(scanId);
+} else {
+  initDashboard();
+}
+
+/* =========================================================
+   FLUJO DE REDIRECT (lo que ve alguien que escanea el QR)
+========================================================= */
+async function runRedirectFlow(id){
+  document.getElementById("redirectView").classList.remove("hidden");
+  const content = document.getElementById("redirectContent");
+  const spinner = document.getElementById("redirectSpinner");
+
+  try{
+    const ref = db.collection("qrs").doc(id);
+    const snap = await ref.get();
+
+    if(!snap.exists || snap.data().activo === false){
+      spinner.classList.add("hidden");
+      content.innerHTML = `<b class="display" style="font-size:18px;">Este código ya no está activo</b>
+        <p style="color:var(--ink-soft); font-size:13px; margin-top:6px;">Consultá con quien lo compartió.</p>`;
+      return;
+    }
+
+    const data = snap.data();
+    // Trackeo simple de escaneo (no bloqueante)
+    ref.update({
+      escaneos: firebase.firestore.FieldValue.increment(1),
+      ultimoEscaneo: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(()=>{});
+
+    if(data.tipo === "url"){
+      window.location.replace(data.destino.url);
+      return;
+    }
+
+    if(data.tipo === "vcard"){
+      spinner.classList.add("hidden");
+      const d = data.destino;
+      const vcf = `BEGIN:VCARD
+VERSION:3.0
+FN:${d.nombre||""}
+ORG:${d.org||""}
+TEL:${d.telefono||""}
+EMAIL:${d.email||""}
+END:VCARD`;
+      const blob = new Blob([vcf], {type:"text/vcard"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `${d.nombre||"contacto"}.vcf`; a.click();
+      content.innerHTML = `<b class="display" style="font-size:18px;">${d.nombre||"Contacto"}</b>
+        <p style="color:var(--ink-soft); font-size:13px; margin-top:6px;">Se descargó el contacto. Abrilo para guardarlo.</p>`;
+      return;
+    }
+
+    if(data.tipo === "wifi"){
+      spinner.classList.add("hidden");
+      const d = data.destino;
+      content.innerHTML = `<div class="wifidone">
+        <b class="display" style="font-size:18px;">Conectate a ${d.ssid}</b>
+        <p style="color:var(--ink-soft); font-size:13px; margin-top:4px;">Seguridad: ${d.seguridad}</p>
+        ${d.seguridad!=="nopass" ? `<div class="pass">${d.password}</div>` : ""}
+      </div>`;
+      return;
+    }
+
+  }catch(e){
+    spinner.classList.add("hidden");
+    content.innerHTML = `<b style="color:var(--signal);">Error al cargar el código</b>
+      <p style="color:var(--ink-soft); font-size:13px; margin-top:6px;">${e.message}</p>`;
+  }
+}
+
+/* =========================================================
+   DASHBOARD: auth + CRUD de QRs
+========================================================= */
+function initDashboard(){
+  const authView = document.getElementById("authView");
+  const dashView = document.getElementById("dashView");
+  let isRegisterMode = false;
+
+  auth.onAuthStateChanged(user=>{
+    if(user){
+      authView.classList.add("hidden");
+      dashView.classList.remove("hidden");
+      document.getElementById("userEmail").textContent = user.email;
+      loadQrs(user.uid);
+    } else {
+      authView.classList.remove("hidden");
+      dashView.classList.add("hidden");
+    }
+  });
+
+  document.getElementById("authSwitchBtn").onclick = ()=>{
+    isRegisterMode = !isRegisterMode;
+    document.getElementById("authTitle").textContent = isRegisterMode ? "Crear cuenta" : "Iniciar sesión";
+    document.getElementById("authSubmit").textContent = isRegisterMode ? "Crear cuenta" : "Entrar";
+    document.getElementById("authSwitchLabel").textContent = isRegisterMode ? "¿Ya tenés cuenta?" : "¿No tenés cuenta?";
+    document.getElementById("authSwitchBtn").textContent = isRegisterMode ? "Iniciar sesión" : "Crear una";
+    document.getElementById("authErr").textContent = "";
+  };
+
+  document.getElementById("authSubmit").onclick = async ()=>{
+    const email = document.getElementById("authEmail").value.trim();
+    const pass = document.getElementById("authPass").value;
+    const errEl = document.getElementById("authErr");
+    errEl.textContent = "";
+    if(!email || !pass){ errEl.textContent = "Completá email y contraseña."; return; }
+    try{
+      if(isRegisterMode){
+        await auth.createUserWithEmailAndPassword(email, pass);
+      } else {
+        await auth.signInWithEmailAndPassword(email, pass);
+      }
+    }catch(e){
+      errEl.textContent = traducirError(e.code);
+    }
+  };
+
+  document.getElementById("logoutBtn").onclick = ()=> auth.signOut();
+
+  /* ---------- CRUD ---------- */
+  const grid = document.getElementById("qrGrid");
+  const empty = document.getElementById("emptyState");
+  let currentType = "url";
+  let editingId = null;
+
+  function loadQrs(uid){
+    db.collection("qrs").where("ownerId","==",uid).orderBy("creado","desc")
+      .onSnapshot(snap=>{
+        grid.innerHTML = "";
+        if(snap.empty){ empty.classList.remove("hidden"); return; }
+        empty.classList.add("hidden");
+        snap.forEach(doc=> grid.appendChild(renderCard(doc.id, doc.data())));
+      }, err=>{
+        console.error(err);
+      });
+  }
+
+  function renderCard(id, d){
+    const el = document.createElement("div");
+    el.className = "card";
+    const destinoTexto = d.tipo==="url" ? d.destino.url
+      : d.tipo==="vcard" ? `${d.destino.nombre} · ${d.destino.telefono||""}`
+      : `Red: ${d.destino.ssid}`;
+    el.innerHTML = `
+      <div class="card-top">
+        <span class="tag ${d.tipo}">${d.tipo}</span>
+        <span class="status-dot ${d.activo!==false?'on':''}" title="${d.activo!==false?'activo':'pausado'}"></span>
+      </div>
+      <h3>${d.nombre||"Sin nombre"}</h3>
+      <div class="dest">${destinoTexto}</div>
+      <div class="card-stats">
+        <div>escaneos <b>${d.escaneos||0}</b></div>
+      </div>
+      <div class="card-actions">
+        <button class="btn small ghost" data-act="view">Ver QR</button>
+        <button class="btn small ghost" data-act="edit">Editar</button>
+        <button class="btn small ghost" data-act="toggle">${d.activo!==false?'Pausar':'Activar'}</button>
+        <button class="btn small danger" data-act="delete">Borrar</button>
+      </div>
+    `;
+    el.querySelector('[data-act="view"]').onclick = ()=> openDetail(id, d);
+    el.querySelector('[data-act="edit"]').onclick = ()=> openModal(d, id);
+    el.querySelector('[data-act="toggle"]').onclick = ()=> db.collection("qrs").doc(id).update({activo: d.activo===false});
+    el.querySelector('[data-act="delete"]').onclick = ()=>{
+      if(confirm("¿Borrar este QR? Los códigos ya impresos dejarán de funcionar.")){
+        db.collection("qrs").doc(id).delete();
+      }
+    };
+    return el;
+  }
+
+  /* ---------- modal crear/editar ---------- */
+  const overlay = document.getElementById("modalOverlay");
+  document.getElementById("newQrBtn").onclick = ()=> openModal();
+  document.getElementById("modalCancel").onclick = closeModal;
+
+  document.querySelectorAll(".typebtn").forEach(b=>{
+    b.onclick = ()=>{
+      document.querySelectorAll(".typebtn").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      currentType = b.dataset.type;
+      ["url","vcard","wifi"].forEach(t=>{
+        document.getElementById("fields-"+t).classList.toggle("hidden", t!==currentType);
+      });
+    };
+  });
+
+  function openModal(existing, id){
+    editingId = id || null;
+    document.getElementById("modalTitle").textContent = existing ? "Editar QR" : "Nuevo QR";
+    document.getElementById("modalErr").textContent = "";
+    currentType = existing ? existing.tipo : "url";
+    document.querySelectorAll(".typebtn").forEach(b=> b.classList.toggle("active", b.dataset.type===currentType));
+    ["url","vcard","wifi"].forEach(t=> document.getElementById("fields-"+t).classList.toggle("hidden", t!==currentType));
+
+    document.getElementById("fNombre").value = existing?.nombre || "";
+    document.getElementById("fUrl").value = existing?.destino?.url || "";
+    document.getElementById("fVName").value = existing?.destino?.nombre || "";
+    document.getElementById("fVPhone").value = existing?.destino?.telefono || "";
+    document.getElementById("fVEmail").value = existing?.destino?.email || "";
+    document.getElementById("fVOrg").value = existing?.destino?.org || "";
+    document.getElementById("fWSsid").value = existing?.destino?.ssid || "";
+    document.getElementById("fWPass").value = existing?.destino?.password || "";
+    document.getElementById("fWSec").value = existing?.destino?.seguridad || "WPA";
+
+    overlay.classList.remove("hidden");
+  }
+  function closeModal(){ overlay.classList.add("hidden"); editingId = null; }
+
+  document.getElementById("modalSave").onclick = async ()=>{
+    const nombre = document.getElementById("fNombre").value.trim();
+    const errEl = document.getElementById("modalErr");
+    if(!nombre){ errEl.textContent = "Ponele un nombre interno al QR."; return; }
+
+    let destino = {};
+    if(currentType === "url"){
+      const url = document.getElementById("fUrl").value.trim();
+      if(!url){ errEl.textContent = "Falta la URL de destino."; return; }
+      destino = { url };
+    } else if(currentType === "vcard"){
+      const nombreV = document.getElementById("fVName").value.trim();
+      if(!nombreV){ errEl.textContent = "Falta el nombre del contacto."; return; }
+      destino = {
+        nombre: nombreV,
+        telefono: document.getElementById("fVPhone").value.trim(),
+        email: document.getElementById("fVEmail").value.trim(),
+        org: document.getElementById("fVOrg").value.trim()
+      };
+    } else if(currentType === "wifi"){
+      const ssid = document.getElementById("fWSsid").value.trim();
+      if(!ssid){ errEl.textContent = "Falta el nombre de la red."; return; }
+      destino = {
+        ssid,
+        password: document.getElementById("fWPass").value,
+        seguridad: document.getElementById("fWSec").value
+      };
+    }
+
+    const uid = auth.currentUser.uid;
+    try{
+      if(editingId){
+        await db.collection("qrs").doc(editingId).update({ nombre, tipo: currentType, destino });
+        closeModal();
+      } else {
+        const docRef = await db.collection("qrs").add({
+          nombre, tipo: currentType, destino,
+          ownerId: uid, activo: true, escaneos: 0,
+          creado: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        closeModal();
+        const snap = await docRef.get();
+        openDetail(docRef.id, snap.data());
+      }
+    }catch(e){
+      errEl.textContent = "Error al guardar: " + e.message;
+    }
+  };
+
+  /* ---------- detalle / QR visual ---------- */
+  const detailOverlay = document.getElementById("detailOverlay");
+  let currentQrLink = "";
+
+  function openDetail(id, d){
+    document.getElementById("detailTitle").textContent = d.nombre || "Tu QR";
+    currentQrLink = `${BASE_URL}?r=${id}`;
+    document.getElementById("detailLink").textContent = currentQrLink;
+    const holder = document.getElementById("qrcanvas");
+    holder.innerHTML = "";
+    new QRCode(holder, {
+      text: currentQrLink,
+      width: 220, height: 220,
+      colorDark: "#14171B",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    detailOverlay.classList.remove("hidden");
+  }
+}
+
+function traducirError(code){
+  const map = {
+    "auth/email-already-in-use":"Ese email ya tiene una cuenta.",
+    "auth/invalid-email":"El email no es válido.",
+    "auth/weak-password":"La contraseña necesita al menos 6 caracteres.",
+    "auth/user-not-found":"No existe una cuenta con ese email.",
+    "auth/wrong-password":"Contraseña incorrecta.",
+    "auth/invalid-credential":"Email o contraseña incorrectos."
+  };
+  return map[code] || "Ocurrió un error. Probá de nuevo.";
+}
+</script>
+</body>
+</html>
