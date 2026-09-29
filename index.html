@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://firestore.googleapis.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=2">
+<link rel="stylesheet" href="css/styles.css?v=4">
 </head>
 <body>
 
@@ -45,7 +45,10 @@
       <div class="matrix" id="navMatrix"></div>
       <div><h1>QR · Tresna</h1></div>
     </div>
-    <button class="btn ghost small" id="navLoginBtn">Iniciar sesión</button>
+    <div style="display:flex; align-items:center; gap:18px;">
+      <a href="#precios" class="navlink">Precios</a>
+      <button class="btn ghost small" id="navLoginBtn">Iniciar sesión</button>
+    </div>
   </nav>
 
   <section class="hero">
@@ -124,7 +127,7 @@
     <div class="features-inner">
       <p class="section-label">Tipos de código</p>
       <h2 class="section-title">Elegí a dónde lleva</h2>
-      <div class="featgrid featgrid-5">
+      <div class="featgrid featgrid-8">
         <div class="featcard url">
           <span class="featicon">🔗</span>
           <h3>Un link</h3>
@@ -150,12 +153,26 @@
           <h3>Un email</h3>
           <p>Abre el correo ya armado, con asunto y mensaje precargados.</p>
         </div>
+        <div class="featcard telefono">
+          <span class="featicon">📞</span>
+          <h3>Un teléfono</h3>
+          <p>Que lo escaneen y se abra el marcador, listo para llamar.</p>
+        </div>
+        <div class="featcard sms">
+          <span class="featicon">💬</span>
+          <h3>Un SMS</h3>
+          <p>Abre la app de mensajes con el número y el texto ya cargados.</p>
+        </div>
+        <div class="featcard ubicacion">
+          <span class="featicon">📍</span>
+          <h3>Una ubicación</h3>
+          <p>Lleva directo a Google Maps, al lugar exacto que elijas.</p>
+        </div>
       </div>
-      <p class="features-more">+ Teléfono, SMS y Ubicación — armá el que necesites.</p>
     </div>
   </section>
 
-  <section class="pricing">
+  <section class="pricing" id="precios">
     <p class="section-label">Precios</p>
     <h2 class="section-title">Elegí tu plan</h2>
     <div class="plansgrid plansgrid-4">
@@ -679,12 +696,12 @@
   </div>
 </div>
 
-<script src="js/core.js?v=2"></script>
-<script src="js/qr-core.js?v=2"></script>
-<script src="js/home.js?v=2"></script>
-<script src="js/demo.js?v=2"></script>
-<script src="js/dashboard.js?v=2"></script>
-<script src="js/admin.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+<script src="js/core.js?v=4"></script>
+<script src="js/qr-core.js?v=4"></script>
+<script src="js/home.js?v=4"></script>
+<script src="js/demo.js?v=4"></script>
+<script src="js/dashboard.js?v=4"></script>
+<script src="js/admin.js?v=4"></script>
+<script src="js/app.js?v=4"></script>
 </body>
 </html>

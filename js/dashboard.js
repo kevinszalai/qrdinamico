@@ -75,6 +75,9 @@ function initDashboard(){
           }
         }
       }
+    }, err=>{
+      console.error("No se pudo leer el plan del usuario:", err);
+      document.getElementById("planBadge").textContent = "Error leyendo plan";
     });
   }
 
