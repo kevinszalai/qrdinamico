@@ -83,8 +83,13 @@ function initDashboard(){
       }
       actualizarVisibilidadDash();
     }, err=>{
+      // Si falla el permiso (o cualquier otro motivo), no mostramos un error feo:
+      // tratamos a la persona como "sin plan todavía" y la mandamos a elegir uno.
       console.error("No se pudo leer el plan del usuario:", err);
-      document.getElementById("planBadge").textContent = "Error leyendo plan";
+      currentPlan = null;
+      document.getElementById("planBadge").textContent = "Sin plan";
+      document.getElementById("planBadge").classList.remove("pro");
+      actualizarVisibilidadDash();
     });
   }
 
