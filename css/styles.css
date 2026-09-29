@@ -83,8 +83,6 @@
   }
   .welcome-head h2{ font-size:26px; font-weight:600; margin-bottom:10px; letter-spacing:-0.01em; }
   .welcome-sub{ font-size:14.5px; color:var(--ink-soft); max-width:520px; margin:0 auto 28px; line-height:1.55; }
-  .welcome-skip{ font-size:12.5px; color:var(--ink-soft); margin-top:22px; }
-  .welcome-skip button{ background:none; color:var(--ink); text-decoration:underline; font-weight:500; }
   @media(max-width:640px){ .welcome{padding:28px 20px;} }
   .plansgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:8px;}
   .plansgrid-4{grid-template-columns:repeat(4,1fr);}

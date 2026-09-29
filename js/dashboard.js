@@ -49,12 +49,11 @@ function initDashboard(){
   });
 
   let planPromptShown = false;
-  let welcomeSkipped = false;
 
   function actualizarVisibilidadDash(){
     const sinPlan = !currentPlan;
-    document.getElementById("welcomeScreen").classList.toggle("hidden", !sinPlan || welcomeSkipped);
-    document.getElementById("dashContent").classList.toggle("hidden", sinPlan && !welcomeSkipped);
+    document.getElementById("welcomeScreen").classList.toggle("hidden", !sinPlan);
+    document.getElementById("dashContent").classList.toggle("hidden", sinPlan);
   }
 
   function watchPlan(uid){
@@ -62,14 +61,17 @@ function initDashboard(){
       const planId = (doc.exists && PLANES[doc.data().plan]) ? doc.data().plan : null;
       currentPlan = planId;
       const badge = document.getElementById("planBadge");
+      const miSuscripcionBtn = document.getElementById("miSuscripcionBtn");
       if(planId){
         const p = PLANES[planId];
         badge.textContent = `Plan ${p.nombre} · ${p.limite ? "hasta "+p.limite : "ilimitados"}`;
         badge.classList.add("pro");
+        miSuscripcionBtn.classList.remove("hidden");
         document.getElementById("proBanner").classList.add("hidden");
       } else {
         badge.textContent = "Sin plan";
         badge.classList.remove("pro");
+        miSuscripcionBtn.classList.add("hidden");
         // Recién registrado (o todavía sin pagar): si vino de la Home con un plan
         // ya elegido, lo mandamos directo a pagar; si no, le mostramos la bienvenida.
         if(!planPromptShown && !volviendoDePago){
@@ -89,6 +91,7 @@ function initDashboard(){
       currentPlan = null;
       document.getElementById("planBadge").textContent = "Sin plan";
       document.getElementById("planBadge").classList.remove("pro");
+      document.getElementById("miSuscripcionBtn").classList.add("hidden");
       actualizarVisibilidadDash();
     });
   }
@@ -117,11 +120,6 @@ function initDashboard(){
   }
   document.getElementById("upgradeBtn").onclick = abrirPlanes;
   document.getElementById("plansClose").onclick = ()=> document.getElementById("plansOverlay").classList.add("hidden");
-
-  document.getElementById("welcomeSkipBtn").onclick = ()=>{
-    welcomeSkipped = true;
-    actualizarVisibilidadDash();
-  };
 
   async function aplicarCupon(codigoInputId, msgId){
     const codigo = document.getElementById(codigoInputId).value.trim();
@@ -195,6 +193,66 @@ function initDashboard(){
   });
 
   document.getElementById("logoutBtn").onclick = ()=> auth.signOut();
+
+  /* ---------- Mi suscripción ---------- */
+  document.getElementById("miSuscripcionBtn").onclick = async ()=>{
+    const infoEl = document.getElementById("suscripcionInfo");
+    const errEl = document.getElementById("suscripcionErr");
+    errEl.textContent = "";
+    infoEl.innerHTML = `<p class="sub">Cargando…</p>`;
+    document.getElementById("suscripcionOverlay").classList.remove("hidden");
+    try{
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`${FUNCTIONS_URL}/miSuscripcion`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const p = PLANES[data.plan];
+      if(!p){
+        infoEl.innerHTML = `<p class="sub">No tenés un plan activo.</p>`;
+        document.getElementById("cancelarSuscripcionBtn").classList.add("hidden");
+        return;
+      }
+      document.getElementById("cancelarSuscripcionBtn").classList.remove("hidden");
+      const precio = data.precioConCupon || PRECIOS_BASE[data.plan];
+      infoEl.innerHTML = `
+        <p style="font-size:16px; font-weight:600; margin-bottom:4px;">Plan ${p.nombre}</p>
+        <p class="sub" style="margin-bottom:2px;">$${precio.toLocaleString("es-AR")}/mes · hasta ${p.limite || "QR ilimitados"}${p.limite ? " QR dinámicos" : ""}</p>
+        ${data.cuponAplicado ? `<p class="sub" style="margin-bottom:2px;">Cupón aplicado: ${data.cuponAplicado}</p>` : ""}
+        <p class="sub">Se renueva automáticamente todos los meses a través de Mercado Pago, hasta que la canceles.</p>
+      `;
+    }catch(e){
+      infoEl.innerHTML = "";
+      errEl.textContent = "No se pudo cargar tu suscripción. Probá de nuevo.";
+    }
+  };
+  document.getElementById("suscripcionClose").onclick = ()=> document.getElementById("suscripcionOverlay").classList.add("hidden");
+
+  document.getElementById("cancelarSuscripcionBtn").onclick = async ()=>{
+    if(!confirm("¿Seguro que querés cancelar tu suscripción? Vas a perder el acceso a los QR dinámicos cuando termine el período ya pagado.")) return;
+    const errEl = document.getElementById("suscripcionErr");
+    const btn = document.getElementById("cancelarSuscripcionBtn");
+    const original = btn.textContent;
+    btn.textContent = "Cancelando…";
+    errEl.textContent = "";
+    try{
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`${FUNCTIONS_URL}/cancelarSuscripcion`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if(data.ok){
+        document.getElementById("suscripcionOverlay").classList.add("hidden");
+        alert("Tu suscripción fue cancelada.");
+      } else {
+        errEl.textContent = data.error || "No se pudo cancelar. Probá de nuevo.";
+      }
+    }catch(e){
+      errEl.textContent = "No se pudo conectar. Probá de nuevo.";
+    }
+    btn.textContent = original;
+  };
 
   /* ---------- CRUD ---------- */
   const grid = document.getElementById("qrGrid");

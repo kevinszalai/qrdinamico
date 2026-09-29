@@ -226,6 +226,82 @@ exports.webhookMP = functions.https.onRequest(async (req, res) => {
 });
 
 // =========================================================
+// GESTIÓN DE LA PROPIA SUSCRIPCIÓN (el usuario, no el admin)
+// =========================================================
+
+/**
+ * Devuelve los datos de la suscripción del usuario logueado (nunca de otro).
+ */
+exports.miSuscripcion = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      const decoded = await getDecodedToken(req);
+      if (!decoded) return res.status(403).json({ error: "No autorizado" });
+      const doc = await db.collection("usuarios").doc(decoded.uid).get();
+      if (!doc.exists) return res.json({ plan: null });
+      const d = doc.data();
+      res.json({
+        plan: d.plan || null,
+        mpStatus: d.mpStatus || null,
+        cuponAplicado: d.cuponAplicado || null,
+        precioConCupon: d.precioConCupon || null,
+        tieneMp: !!d.mpPreapprovalId,
+      });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+});
+
+/**
+ * Cancela la suscripción del usuario logueado en Mercado Pago y le saca el plan.
+ * Sólo puede cancelar la SUYA (nunca la de otro uid).
+ */
+exports.cancelarSuscripcion = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      const decoded = await getDecodedToken(req);
+      if (!decoded) return res.status(403).json({ error: "No autorizado" });
+      const uid = decoded.uid;
+
+      const doc = await db.collection("usuarios").doc(uid).get();
+      if (!doc.exists || !doc.data().mpPreapprovalId) {
+        return res.status(400).json({ error: "No se encontró una suscripción activa para cancelar" });
+      }
+      const mpId = doc.data().mpPreapprovalId;
+
+      const mpRes = await fetch(`https://api.mercadopago.com/preapproval/${mpId}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${MP_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "cancelled" }),
+      });
+      if (!mpRes.ok) {
+        const data = await mpRes.json();
+        console.error("Error cancelando en Mercado Pago:", data);
+        return res.status(500).json({ error: "No se pudo cancelar la suscripción en Mercado Pago" });
+      }
+
+      await db.collection("usuarios").doc(uid).set(
+        {
+          plan: admin.firestore.FieldValue.delete(),
+          mpStatus: "cancelled",
+        },
+        { merge: true }
+      );
+
+      res.json({ ok: true });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+});
+
+// =========================================================
 // ADMIN
 // =========================================================
 

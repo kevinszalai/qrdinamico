@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://firestore.googleapis.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=7">
+<link rel="stylesheet" href="css/styles.css?v=9">
 </head>
 <body>
 
@@ -360,6 +360,7 @@
     </div>
     <div class="userchip">
       <span id="planBadge" class="plan-badge">Sin plan</span>
+      <button class="btn small ghost hidden" id="miSuscripcionBtn">Mi suscripción</button>
       <button class="btn small" id="upgradeBtn">Ver planes</button>
       <span id="userEmail"></span>
       <button id="logoutBtn">salir</button>
@@ -407,7 +408,6 @@
         </div>
       </div>
       <div class="err" id="welcomeErr" style="text-align:center; margin-top:14px;"></div>
-      <p class="welcome-skip">¿Solo querés mirar? <button id="welcomeSkipBtn">Ver el panel igual</button></p>
     </div>
 
     <!-- Dashboard normal, una vez que hay plan (o si el usuario eligió "ver igual") -->
@@ -570,6 +570,21 @@
 </div>
 
 <!-- ============ MODAL DE PLANES ============ -->
+<!-- ============ MI SUSCRIPCIÓN ============ -->
+<div id="suscripcionOverlay" class="overlay hidden">
+  <div class="modal">
+    <h3>Mi suscripción</h3>
+    <div id="suscripcionInfo" style="margin:16px 0;">
+      <p class="sub">Cargando…</p>
+    </div>
+    <div class="err" id="suscripcionErr"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="suscripcionClose">Cerrar</button>
+      <button class="btn danger" id="cancelarSuscripcionBtn">Cancelar suscripción</button>
+    </div>
+  </div>
+</div>
+
 <div id="plansOverlay" class="overlay hidden">
   <div class="modal" style="max-width:820px;">
     <h3>Elegí tu plan</h3>
@@ -739,12 +754,12 @@
   </div>
 </div>
 
-<script src="js/core.js?v=7"></script>
-<script src="js/qr-core.js?v=7"></script>
-<script src="js/home.js?v=7"></script>
-<script src="js/demo.js?v=7"></script>
-<script src="js/dashboard.js?v=7"></script>
-<script src="js/admin.js?v=7"></script>
-<script src="js/app.js?v=7"></script>
+<script src="js/core.js?v=9"></script>
+<script src="js/qr-core.js?v=9"></script>
+<script src="js/home.js?v=9"></script>
+<script src="js/demo.js?v=9"></script>
+<script src="js/dashboard.js?v=9"></script>
+<script src="js/admin.js?v=9"></script>
+<script src="js/app.js?v=9"></script>
 </body>
 </html>
