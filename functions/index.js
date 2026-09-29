@@ -13,7 +13,7 @@ const BASE_URL = "https://kevinszalai.github.io/qrdinamico/";
 // El panel de admin sólo deja entrar a esta cuenta puntual.
 // Creála una vez en Firebase Console → Authentication → Add user,
 // con este mismo email y la contraseña que quieras usar.
-const ADMIN_EMAIL = "kevinszalai@admin.qrtresna.local";
+const ADMIN_EMAIL = "kevin@admin.qrtresna.local";
 
 const PLANES = {
   starter: { nombre: "Starter", precio: 4999, limite: 5 },
