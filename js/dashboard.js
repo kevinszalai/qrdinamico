@@ -31,6 +31,11 @@ function initDashboard(){
   }
 
   auth.onAuthStateChanged(user=>{
+    if(user && user.email === ADMIN_EMAIL){
+      // Es la cuenta de admin pero entró sin ?admin=1: la mandamos al panel correcto
+      window.location.search = "?admin=1";
+      return;
+    }
     if(user){
       homeView.classList.add("hidden");
       authView.classList.add("hidden");
