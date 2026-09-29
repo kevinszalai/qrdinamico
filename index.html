@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR · Tresna</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://firestore.googleapis.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -189,15 +186,8 @@
   // 2) URL base donde vas a alojar este archivo (GitHub Pages, etc). Sin barra final.
   const BASE_URL = "https://kevinszalai.github.io/qrdinamico/";
 
-  let auth, db, configOk = true;
-  try{
-    if(firebaseConfig.apiKey === "TU_API_KEY"){ throw new Error("config-placeholder"); }
-    firebase.initializeApp(firebaseConfig);
-    auth = firebase.auth();
-    db = firebase.firestore();
-  }catch(e){
-    configOk = false;
-  }
+  let auth, db;
+  const configOk = firebaseConfig.apiKey !== "TU_API_KEY";
 </script>
 
 <!-- ============ AUTH VIEW ============ -->
@@ -470,54 +460,102 @@ document.getElementById("downloadBtn").onclick = ()=>{
 
 if(!configOk){
   document.getElementById("setupView").classList.remove("hidden");
-  document.getElementById("viewDemoBtn").onclick = enterDemoMode;
+  document.getElementById("viewDemoBtn").onclick = ()=>{
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js").then(enterDemoMode);
+  };
 } else if(scanId){
-  runRedirectFlow(scanId);
+  fastRedirect(scanId);
 } else {
-  initDashboard();
+  bootDashboard();
+}
+
+function loadScript(src){
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement("script");
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function bootDashboard(){
+  try{
+    await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
+    await Promise.all([
+      loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"),
+      loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"),
+      loadScript("https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js")
+    ]);
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    initDashboard();
+  }catch(e){
+    document.body.innerHTML = `<div class="redirectwrap"><b style="color:var(--signal);">No se pudo cargar la app</b><p style="color:var(--ink-soft); font-size:13px; margin-top:6px;">Revisá tu conexión y recargá la página.</p></div>`;
+  }
 }
 
 /* =========================================================
-   FLUJO DE REDIRECT (lo que ve alguien que escanea el QR)
+   REDIRECT RÁPIDO (sin SDK): una sola consulta REST a Firestore
 ========================================================= */
-async function runRedirectFlow(id){
+function parseFirestoreValue(v){
+  if(v.stringValue !== undefined) return v.stringValue;
+  if(v.booleanValue !== undefined) return v.booleanValue;
+  if(v.integerValue !== undefined) return parseInt(v.integerValue,10);
+  if(v.doubleValue !== undefined) return v.doubleValue;
+  if(v.mapValue !== undefined) return parseFirestoreDoc(v.mapValue);
+  if(v.nullValue !== undefined) return null;
+  if(v.arrayValue !== undefined) return (v.arrayValue.values||[]).map(parseFirestoreValue);
+  return null;
+}
+function parseFirestoreDoc(doc){
+  const out = {};
+  const fields = doc.fields || {};
+  for(const key in fields){ out[key] = parseFirestoreValue(fields[key]); }
+  return out;
+}
+
+async function fastRedirect(id){
   document.getElementById("redirectView").classList.remove("hidden");
   const content = document.getElementById("redirectContent");
   const spinner = document.getElementById("redirectSpinner");
+  const projectId = firebaseConfig.projectId;
+  const docPath = `projects/${projectId}/databases/(default)/documents/qrs/${id}`;
 
   try{
-    const ref = db.collection("qrs").doc(id);
-    const snap = await ref.get();
+    const res = await fetch(`https://firestore.googleapis.com/v1/${docPath}`);
+    if(res.status === 404){
+      spinner.classList.add("hidden");
+      content.innerHTML = `<b class="display" style="font-size:18px;">Este código no existe</b>`;
+      return;
+    }
+    const data = parseFirestoreDoc(await res.json());
 
-    if(!snap.exists || snap.data().activo === false){
+    if(data.activo === false){
       spinner.classList.add("hidden");
       content.innerHTML = `<b class="display" style="font-size:18px;">Este código ya no está activo</b>
         <p style="color:var(--ink-soft); font-size:13px; margin-top:6px;">Consultá con quien lo compartió.</p>`;
       return;
     }
 
-    const data = snap.data();
-    // Trackeo simple de escaneo (no bloqueante)
-    ref.update({
-      escaneos: firebase.firestore.FieldValue.increment(1),
-      ultimoEscaneo: firebase.firestore.FieldValue.serverTimestamp()
+    // suma el escaneo en paralelo, sin retrasar el redirect
+    fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      keepalive: true,
+      body: JSON.stringify({ writes: [{ transform: {
+        document: docPath,
+        fieldTransforms: [{ fieldPath: "escaneos", increment: { integerValue: "1" } }]
+      }}]})
     }).catch(()=>{});
 
     if(data.tipo === "url"){
       window.location.replace(data.destino.url);
       return;
     }
-
     if(data.tipo === "vcard"){
       spinner.classList.add("hidden");
       const d = data.destino;
-      const vcf = `BEGIN:VCARD
-VERSION:3.0
-FN:${d.nombre||""}
-ORG:${d.org||""}
-TEL:${d.telefono||""}
-EMAIL:${d.email||""}
-END:VCARD`;
+      const vcf = `BEGIN:VCARD\nVERSION:3.0\nFN:${d.nombre||""}\nORG:${d.org||""}\nTEL:${d.telefono||""}\nEMAIL:${d.email||""}\nEND:VCARD`;
       const blob = new Blob([vcf], {type:"text/vcard"});
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -526,7 +564,6 @@ END:VCARD`;
         <p style="color:var(--ink-soft); font-size:13px; margin-top:6px;">Se descargó el contacto. Abrilo para guardarlo.</p>`;
       return;
     }
-
     if(data.tipo === "wifi"){
       spinner.classList.add("hidden");
       const d = data.destino;
@@ -537,7 +574,6 @@ END:VCARD`;
       </div>`;
       return;
     }
-
   }catch(e){
     spinner.classList.add("hidden");
     content.innerHTML = `<b style="color:var(--signal);">Error al cargar el código</b>
@@ -611,14 +647,21 @@ function initDashboard(){
   let editingId = null;
 
   function loadQrs(uid){
-    db.collection("qrs").where("ownerId","==",uid).orderBy("creado","desc")
+    db.collection("qrs").where("ownerId","==",uid)
       .onSnapshot(snap=>{
         grid.innerHTML = "";
         if(snap.empty){ empty.classList.remove("hidden"); return; }
         empty.classList.add("hidden");
-        snap.forEach(doc=> grid.appendChild(renderCard(doc.id, doc.data())));
+        const docs = snap.docs.slice().sort((a,b)=>{
+          const ta = a.data().creado ? a.data().creado.toMillis() : 0;
+          const tb = b.data().creado ? b.data().creado.toMillis() : 0;
+          return tb - ta;
+        });
+        docs.forEach(doc=> grid.appendChild(renderCard(doc.id, doc.data())));
       }, err=>{
         console.error(err);
+        empty.classList.remove("hidden");
+        empty.innerHTML = `<b>No se pudieron cargar tus QRs</b>${err.message}`;
       });
   }
 
