@@ -175,6 +175,9 @@ function initDashboard(){
       } else if(data.gratis){
         document.getElementById("plansOverlay").classList.add("hidden");
         alert("¡Listo! Tu plan quedó activado gratis por el cupón.");
+      } else if(data.cambiado){
+        document.getElementById("plansOverlay").classList.add("hidden");
+        alert(`¡Listo! Ya estás en el plan ${PLANES[data.plan].nombre}. Se ajusta en tu próxima factura de Mercado Pago, no te cobra dos veces.`);
       } else {
         errEl.textContent = "No se pudo iniciar el pago. Probá de nuevo en un momento.";
         if(btn) btn.textContent = original;
@@ -192,7 +195,9 @@ function initDashboard(){
     btn.onclick = ()=> iniciarPago(btn.dataset.welcomeplan, btn, "welcomeErr");
   });
 
-  document.getElementById("logoutBtn").onclick = ()=> auth.signOut();
+  document.getElementById("logoutBtn").onclick = ()=>{
+    auth.signOut().finally(()=>{ window.location.href = BASE_URL; });
+  };
 
   /* ---------- Mi suscripción ---------- */
   document.getElementById("miSuscripcionBtn").onclick = async ()=>{
@@ -215,12 +220,21 @@ function initDashboard(){
       }
       document.getElementById("cancelarSuscripcionBtn").classList.remove("hidden");
       const precio = data.precioConCupon || PRECIOS_BASE[data.plan];
+      const proximoPagoTxt = data.proximoPago
+        ? new Date(data.proximoPago).toLocaleDateString("es-AR", { day:"numeric", month:"long", year:"numeric" })
+        : null;
       infoEl.innerHTML = `
         <p style="font-size:16px; font-weight:600; margin-bottom:4px;">Plan ${p.nombre}</p>
         <p class="sub" style="margin-bottom:2px;">$${precio.toLocaleString("es-AR")}/mes · hasta ${p.limite || "QR ilimitados"}${p.limite ? " QR dinámicos" : ""}</p>
         ${data.cuponAplicado ? `<p class="sub" style="margin-bottom:2px;">Cupón aplicado: ${data.cuponAplicado}</p>` : ""}
-        <p class="sub">Se renueva automáticamente todos los meses a través de Mercado Pago, hasta que la canceles.</p>
+        ${proximoPagoTxt ? `<p class="sub" style="margin-bottom:2px;"><b style="color:var(--ink);">Próximo pago:</b> ${proximoPagoTxt} (fecha aproximada)</p>` : ""}
+        <p class="sub" style="margin-top:10px;">Se renueva automáticamente todos los meses a través de Mercado Pago, hasta que la canceles.</p>
+        <button class="btn ghost small" id="cambiarPlanBtn" style="margin-top:10px;">Subir o bajar de plan</button>
       `;
+      document.getElementById("cambiarPlanBtn").onclick = ()=>{
+        document.getElementById("suscripcionOverlay").classList.add("hidden");
+        abrirPlanes();
+      };
     }catch(e){
       infoEl.innerHTML = "";
       errEl.textContent = "No se pudo cargar tu suscripción. Probá de nuevo.";
@@ -229,7 +243,7 @@ function initDashboard(){
   document.getElementById("suscripcionClose").onclick = ()=> document.getElementById("suscripcionOverlay").classList.add("hidden");
 
   document.getElementById("cancelarSuscripcionBtn").onclick = async ()=>{
-    if(!confirm("¿Seguro que querés cancelar tu suscripción? Vas a perder el acceso a los QR dinámicos cuando termine el período ya pagado.")) return;
+    if(!confirm("¿Seguro que querés cancelar tu suscripción?\n\nOJO: tus QR dinámicos van a dejar de funcionar (van a quedar pausados) apenas se cancele — quien los escanee no va a llegar a ningún lado hasta que reactives un plan.")) return;
     const errEl = document.getElementById("suscripcionErr");
     const btn = document.getElementById("cancelarSuscripcionBtn");
     const original = btn.textContent;
@@ -244,7 +258,7 @@ function initDashboard(){
       const data = await res.json();
       if(data.ok){
         document.getElementById("suscripcionOverlay").classList.add("hidden");
-        alert("Tu suscripción fue cancelada.");
+        alert(`Tu suscripción fue cancelada. ${data.qrsPausados ? `${data.qrsPausados} QR quedaron pausados.` : ""}`);
       } else {
         errEl.textContent = data.error || "No se pudo cancelar. Probá de nuevo.";
       }

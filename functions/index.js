@@ -107,6 +107,47 @@ exports.crearSuscripcion = functions.https.onRequest((req, res) => {
         return res.json({ gratis: true, hasta: hasta.toDate().toISOString() });
       }
 
+      // ¿Ya tiene una suscripción activa en Mercado Pago? Le cambiamos el monto
+      // y el plan a ESA MISMA suscripción, en vez de crear una nueva — así nunca
+      // termina pagando dos planes al mismo tiempo por subir o bajar de plan.
+      const usuarioDoc = await db.collection("usuarios").doc(uid).get();
+      const existente = usuarioDoc.exists ? usuarioDoc.data() : null;
+
+      if (existente && existente.mpPreapprovalId && existente.mpStatus === "authorized") {
+        const mpUpdateRes = await fetch(`https://api.mercadopago.com/preapproval/${existente.mpPreapprovalId}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${MP_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            reason: `QR Tresna - Plan ${nombre}`,
+            auto_recurring: { transaction_amount: precioFinal },
+          }),
+        });
+        if (!mpUpdateRes.ok) {
+          const errData = await mpUpdateRes.json();
+          console.error("Error cambiando el plan en Mercado Pago:", errData);
+          return res.status(500).json({ error: "No se pudo cambiar de plan" });
+        }
+        const cambio = { plan, planSolicitado: plan };
+        if (cupon) {
+          cambio.cuponAplicado = cupon.id;
+          cambio.precioConCupon = precioFinal;
+          cambio.precioNormal = precio;
+          cambio.descuentoHasta = admin.firestore.Timestamp.fromMillis(
+            Date.now() + (cupon.duracionMeses || 1) * MS_POR_MES
+          );
+        } else {
+          cambio.cuponAplicado = admin.firestore.FieldValue.delete();
+          cambio.precioConCupon = admin.firestore.FieldValue.delete();
+          cambio.precioNormal = admin.firestore.FieldValue.delete();
+          cambio.descuentoHasta = admin.firestore.FieldValue.delete();
+        }
+        await db.collection("usuarios").doc(uid).set(cambio, { merge: true });
+        return res.json({ cambiado: true, plan });
+      }
+
       const mpRes = await fetch("https://api.mercadopago.com/preapproval", {
         method: "POST",
         headers: {
@@ -240,12 +281,27 @@ exports.miSuscripcion = functions.https.onRequest((req, res) => {
       const doc = await db.collection("usuarios").doc(decoded.uid).get();
       if (!doc.exists) return res.json({ plan: null });
       const d = doc.data();
+
+      let proximoPago = null;
+      if (d.mpPreapprovalId && d.mpStatus === "authorized") {
+        try {
+          const mpRes = await fetch(`https://api.mercadopago.com/preapproval/${d.mpPreapprovalId}`, {
+            headers: { "Authorization": `Bearer ${MP_TOKEN}` },
+          });
+          const sub = await mpRes.json();
+          proximoPago = sub.next_payment_date || sub.auto_recurring?.start_date || null;
+        } catch (e) {
+          console.error("No se pudo consultar la fecha de próximo pago:", e);
+        }
+      }
+
       res.json({
         plan: d.plan || null,
         mpStatus: d.mpStatus || null,
         cuponAplicado: d.cuponAplicado || null,
         precioConCupon: d.precioConCupon || null,
         tieneMp: !!d.mpPreapprovalId,
+        proximoPago,
       });
     } catch (e) {
       console.error(e);
@@ -293,7 +349,15 @@ exports.cancelarSuscripcion = functions.https.onRequest((req, res) => {
         { merge: true }
       );
 
-      res.json({ ok: true });
+      // Pausamos todos sus QR dinámicos: al cancelar, dejan de redirigir.
+      const qrsSnap = await db.collection("qrs").where("ownerId", "==", uid).get();
+      if (!qrsSnap.empty) {
+        const batch = db.batch();
+        qrsSnap.forEach((d) => batch.update(d.ref, { activo: false }));
+        await batch.commit();
+      }
+
+      res.json({ ok: true, qrsPausados: qrsSnap.size });
     } catch (e) {
       console.error(e);
       res.status(500).json({ error: e.message });
