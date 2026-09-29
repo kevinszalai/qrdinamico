@@ -65,45 +65,34 @@
     </div>
   </section>
 
-  <section class="pricing">
-    <p class="section-label">Precios</p>
-    <h2 class="section-title">Elegí tu plan</h2>
-    <div class="plansgrid plansgrid-4">
-      <div class="plancard">
-        <h4>Gratis</h4>
-        <p class="planprice">$0<span>/mes</span></p>
-        <p class="planlimit">QR simple, sin cuenta</p>
-        <button class="btn ghost" id="planGratisBtn" style="width:100%; justify-content:center;">Probar gratis</button>
-      </div>
-      <div class="plancard">
-        <h4>Starter</h4>
-        <p class="planprice">$4.999<span>/mes</span></p>
-        <p class="planlimit">hasta 5 QR dinámicos</p>
-        <button class="btn ghost" data-homeplan="starter" style="width:100%; justify-content:center;">Empezar con Starter</button>
-      </div>
-      <div class="plancard featured">
-        <span class="planbadgepop">más elegido</span>
-        <h4>Pro</h4>
-        <p class="planprice">$9.999<span>/mes</span></p>
-        <p class="planlimit">hasta 20 QR dinámicos</p>
-        <button class="btn" data-homeplan="pro" style="width:100%; justify-content:center;">Empezar con Pro</button>
-      </div>
-      <div class="plancard">
-        <h4>Negocio</h4>
-        <p class="planprice">$19.999<span>/mes</span></p>
-        <p class="planlimit">QR dinámicos ilimitados</p>
-        <button class="btn ghost" data-homeplan="negocio" style="width:100%; justify-content:center;">Empezar con Negocio</button>
-      </div>
-    </div>
-    <p class="pricing-note">Los planes pagos son para QR dinámicos (los que podés editar después). El QR simple es gratis.</p>
-  </section>
+  <section class="explainer">
+    <p class="section-label">Qué es esto</p>
+    <h2 class="section-title">Un QR normal, con superpoderes</h2>
+    <p class="explainer-lead">Un código QR común queda fijo para siempre: lo que codificás ahí es lo que va a mostrar por el resto de su vida útil. Acá no. Cada QR dinámico que creás apunta a un link corto y editable — vos cambiás el destino desde tu panel las veces que quieras, y el mismo papel ya impreso sigue funcionando.</p>
 
-  <section class="freeband">
-    <div class="freeband-inner">
-      <span class="freebadge">gratis</span>
-      <h2>¿Solo querés probar? Generá un QR ahora mismo</h2>
-      <p>Sin cuenta, sin tarjeta, sin vueltas. Elegí URL o Contacto y descargalo en segundos.</p>
-      <button class="btn btn-signal" id="tryFreeBtn">Generar mi QR gratis →</button>
+    <div class="explainer-diagram">
+      <span class="explainer-code mono">tuweb.com/?r=<b>a8x2</b></span>
+      <span class="explainer-arrow">→</span>
+      <span class="explainer-target mono">tu-sitio.com</span>
+    </div>
+    <p class="explainer-diagram-caption">El QR impreso nunca cambia. Lo que cambia es a dónde apunta ese link corto — en segundos, desde tu panel.</p>
+
+    <div class="explainer-grid">
+      <div class="explainer-item">
+        <span class="explainer-num mono">01</span>
+        <h3>Editable en vivo</h3>
+        <p>Cambiás el destino las veces que quieras, sin reimprimir nada.</p>
+      </div>
+      <div class="explainer-item">
+        <span class="explainer-num mono">02</span>
+        <h3>Con estadísticas</h3>
+        <p>Sabés cuántas veces lo escanearon, sin depender de nadie más.</p>
+      </div>
+      <div class="explainer-item">
+        <span class="explainer-num mono">03</span>
+        <h3>Infraestructura real</h3>
+        <p>Corre sobre la misma tecnología que usan apps grandes — no es un truco casero.</p>
+      </div>
     </div>
   </section>
 
@@ -162,6 +151,48 @@
     <p class="features-more">+ Teléfono, SMS y Ubicación — armá el que necesites.</p>
   </section>
 
+  <section class="pricing">
+    <p class="section-label">Precios</p>
+    <h2 class="section-title">Elegí tu plan</h2>
+    <div class="plansgrid plansgrid-4">
+      <div class="plancard">
+        <h4>Gratis</h4>
+        <p class="planprice">$0<span>/mes</span></p>
+        <p class="planlimit">QR simple, sin cuenta</p>
+        <button class="btn ghost" id="planGratisBtn" style="width:100%; justify-content:center;">Probar gratis</button>
+      </div>
+      <div class="plancard">
+        <h4>Starter</h4>
+        <p class="planprice">$4.999<span>/mes</span></p>
+        <p class="planlimit">hasta 5 QR dinámicos</p>
+        <button class="btn ghost" data-homeplan="starter" style="width:100%; justify-content:center;">Empezar con Starter</button>
+      </div>
+      <div class="plancard featured">
+        <span class="planbadgepop">más elegido</span>
+        <h4>Pro</h4>
+        <p class="planprice">$9.999<span>/mes</span></p>
+        <p class="planlimit">hasta 20 QR dinámicos</p>
+        <button class="btn" data-homeplan="pro" style="width:100%; justify-content:center;">Empezar con Pro</button>
+      </div>
+      <div class="plancard">
+        <h4>Negocio</h4>
+        <p class="planprice">$19.999<span>/mes</span></p>
+        <p class="planlimit">QR dinámicos ilimitados</p>
+        <button class="btn ghost" data-homeplan="negocio" style="width:100%; justify-content:center;">Empezar con Negocio</button>
+      </div>
+    </div>
+    <p class="pricing-note">Los planes pagos son para QR dinámicos (los que podés editar después). El QR simple es gratis.</p>
+  </section>
+
+  <section class="freeband">
+    <div class="freeband-inner">
+      <span class="freebadge">gratis</span>
+      <h2>¿Solo querés probar? Generá un QR ahora mismo</h2>
+      <p>Sin cuenta, sin tarjeta, sin vueltas. Elegí URL o Contacto y descargalo en segundos.</p>
+      <button class="btn btn-signal" id="tryFreeBtn">Generar mi QR gratis →</button>
+    </div>
+  </section>
+
   <footer class="homefooter">
     <p>¿Ya tenés cuenta?</p>
     <button class="btn ghost" id="footerLoginBtn">Entrar a mi panel</button>
@@ -187,10 +218,15 @@
       </div>
     </div>
     <div id="staticFields-vcard" class="hidden">
-      <div class="field"><label>Nombre completo</label><input id="staticVName" placeholder="Kevin Szalai"></div>
-      <div class="field"><label>Teléfono</label><input id="staticVPhone" placeholder="+54 9 11 ..."></div>
+      <div class="field"><label>Nombre completo</label><input id="staticVName" placeholder="Juan Pérez"></div>
+      <div class="field"><label>Teléfono</label>
+        <div class="phonerow">
+          <select id="staticVPhoneCod"></select>
+          <input id="staticVPhone" placeholder="11 5555-5555">
+        </div>
+      </div>
       <div class="field"><label>Email</label><input id="staticVEmail" placeholder="vos@ejemplo.com"></div>
-      <div class="field"><label>Empresa (opcional)</label><input id="staticVOrg" placeholder="Tresna"></div>
+      <div class="field"><label>Empresa (opcional)</label><input id="staticVOrg" placeholder="Mi Empresa"></div>
     </div>
 
     <button class="btn" id="staticGenBtn" style="width:100%; justify-content:center;">Generar QR</button>
@@ -328,93 +364,124 @@
 
 <!-- ============ CREATE/EDIT MODAL ============ -->
 <div id="modalOverlay" class="overlay hidden">
-  <div class="modal">
+  <div class="modal modal-wide">
     <h3 id="modalTitle">Nuevo QR</h3>
     <p class="sub">Elegí el tipo de destino. Podés cambiarlo cuando quieras sin reimprimir el código.</p>
 
-    <div class="typegrid" style="grid-template-columns:repeat(4,1fr);">
-      <button class="typebtn active" data-type="url">🔗 URL</button>
-      <button class="typebtn" data-type="vcard">👤 Contacto</button>
-      <button class="typebtn" data-type="wifi">📶 WiFi</button>
-      <button class="typebtn" data-type="texto">📝 Texto</button>
-      <button class="typebtn" data-type="email">✉️ Email</button>
-      <button class="typebtn" data-type="telefono">📞 Teléfono</button>
-      <button class="typebtn" data-type="sms">💬 SMS</button>
-      <button class="typebtn" data-type="ubicacion">📍 Ubicación</button>
-    </div>
+    <div class="modal-split">
+      <div class="modal-form">
+        <div class="typegrid" style="grid-template-columns:repeat(4,1fr);">
+          <button class="typebtn active" data-type="url">🔗 URL</button>
+          <button class="typebtn" data-type="vcard">👤 Contacto</button>
+          <button class="typebtn" data-type="wifi">📶 WiFi</button>
+          <button class="typebtn" data-type="texto">📝 Texto</button>
+          <button class="typebtn" data-type="email">✉️ Email</button>
+          <button class="typebtn" data-type="telefono">📞 Teléfono</button>
+          <button class="typebtn" data-type="sms">💬 SMS</button>
+          <button class="typebtn" data-type="ubicacion">📍 Ubicación</button>
+        </div>
 
-    <div class="field">
-      <label>Nombre interno</label>
-      <input id="fNombre" placeholder="Ej: Flyer evento noviembre">
-    </div>
+        <div class="field">
+          <label>Nombre interno</label>
+          <input id="fNombre" placeholder="Ej: Flyer evento noviembre">
+        </div>
 
-    <!-- URL fields -->
-    <div id="fields-url">
-      <div class="field">
-        <label>URL de destino</label>
-        <input id="fUrl" placeholder="https://...">
+        <!-- URL fields -->
+        <div id="fields-url">
+          <div class="field">
+            <label>URL de destino</label>
+            <input id="fUrl" placeholder="https://...">
+          </div>
+        </div>
+
+        <!-- vCard fields -->
+        <div id="fields-vcard" class="hidden">
+          <div class="field"><label>Nombre completo</label><input id="fVName" placeholder="Juan Pérez"></div>
+          <div class="field"><label>Teléfono</label>
+            <div class="phonerow">
+              <select id="fVPhoneCod"></select>
+              <input id="fVPhone" placeholder="11 5555-5555">
+            </div>
+          </div>
+          <div class="field"><label>Email</label><input id="fVEmail" placeholder="vos@ejemplo.com"></div>
+          <div class="field"><label>Empresa (opcional)</label><input id="fVOrg" placeholder="Mi Empresa"></div>
+        </div>
+
+        <!-- Wifi fields -->
+        <div id="fields-wifi" class="hidden">
+          <div class="field"><label>Nombre de red (SSID)</label><input id="fWSsid" placeholder="MiRed_5G"></div>
+          <div class="field"><label>Contraseña</label><input id="fWPass" placeholder="••••••••"></div>
+          <div class="field">
+            <label>Seguridad</label>
+            <select id="fWSec">
+              <option value="WPA">WPA/WPA2</option>
+              <option value="WEP">WEP</option>
+              <option value="nopass">Abierta (sin contraseña)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Texto libre -->
+        <div id="fields-texto" class="hidden">
+          <div class="field">
+            <label>Contenido</label>
+            <textarea id="fTexto" rows="4" style="width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; font-family:inherit;" placeholder="El texto que quieras mostrar al escanear"></textarea>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div id="fields-email" class="hidden">
+          <div class="field"><label>Email de destino</label><input id="fEmail" placeholder="vos@ejemplo.com"></div>
+          <div class="field"><label>Asunto (opcional)</label><input id="fEmailAsunto" placeholder="Consulta"></div>
+          <div class="field"><label>Mensaje (opcional)</label><input id="fEmailMensaje" placeholder="Hola, quería preguntarte..."></div>
+        </div>
+
+        <!-- Teléfono -->
+        <div id="fields-telefono" class="hidden">
+          <div class="field"><label>Número de teléfono</label>
+            <div class="phonerow">
+              <select id="fTelefonoCod"></select>
+              <input id="fTelefono" placeholder="11 5555-5555">
+            </div>
+          </div>
+        </div>
+
+        <!-- SMS -->
+        <div id="fields-sms" class="hidden">
+          <div class="field"><label>Número de teléfono</label>
+            <div class="phonerow">
+              <select id="fSmsNumeroCod"></select>
+              <input id="fSmsNumero" placeholder="11 5555-5555">
+            </div>
+          </div>
+          <div class="field"><label>Mensaje (opcional)</label><input id="fSmsMensaje" placeholder="Hola, te escribo por..."></div>
+        </div>
+
+        <!-- Ubicación -->
+        <div id="fields-ubicacion" class="hidden">
+          <div class="field"><label>Latitud</label><input id="fLat" placeholder="-34.6037"></div>
+          <div class="field"><label>Longitud</label><input id="fLng" placeholder="-58.3816"></div>
+          <p class="sub" style="margin:-4px 0 0;">Tip: buscá el lugar en Google Maps, click derecho sobre el pin y copiá las coordenadas.</p>
+        </div>
+
+        <div class="err" id="modalErr"></div>
+        <div class="modal-actions">
+          <button class="btn ghost" id="modalCancel">Cancelar</button>
+          <button class="btn" id="modalSave">Guardar y generar</button>
+        </div>
       </div>
-    </div>
 
-    <!-- vCard fields -->
-    <div id="fields-vcard" class="hidden">
-      <div class="field"><label>Nombre completo</label><input id="fVName" placeholder="Kevin Szalai"></div>
-      <div class="field"><label>Teléfono</label><input id="fVPhone" placeholder="+54 9 11 ..."></div>
-      <div class="field"><label>Email</label><input id="fVEmail" placeholder="vos@ejemplo.com"></div>
-      <div class="field"><label>Empresa (opcional)</label><input id="fVOrg" placeholder="Tresna"></div>
-    </div>
-
-    <!-- Wifi fields -->
-    <div id="fields-wifi" class="hidden">
-      <div class="field"><label>Nombre de red (SSID)</label><input id="fWSsid" placeholder="MiRed_5G"></div>
-      <div class="field"><label>Contraseña</label><input id="fWPass" placeholder="••••••••"></div>
-      <div class="field">
-        <label>Seguridad</label>
-        <select id="fWSec">
-          <option value="WPA">WPA/WPA2</option>
-          <option value="WEP">WEP</option>
-          <option value="nopass">Abierta (sin contraseña)</option>
-        </select>
+      <div class="modal-preview">
+        <p class="previewlabel">Vista previa</p>
+        <div id="previewQrHolder" class="previewqr"></div>
+        <div class="previewcard">
+          <div class="card-top">
+            <span class="tag url" id="previewTag">url</span>
+          </div>
+          <h3 id="previewNombre">Sin nombre</h3>
+          <div class="dest" id="previewDest">—</div>
+        </div>
       </div>
-    </div>
-
-    <!-- Texto libre -->
-    <div id="fields-texto" class="hidden">
-      <div class="field">
-        <label>Contenido</label>
-        <textarea id="fTexto" rows="4" style="width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; font-family:inherit;" placeholder="El texto que quieras mostrar al escanear"></textarea>
-      </div>
-    </div>
-
-    <!-- Email -->
-    <div id="fields-email" class="hidden">
-      <div class="field"><label>Email de destino</label><input id="fEmail" placeholder="vos@ejemplo.com"></div>
-      <div class="field"><label>Asunto (opcional)</label><input id="fEmailAsunto" placeholder="Consulta"></div>
-      <div class="field"><label>Mensaje (opcional)</label><input id="fEmailMensaje" placeholder="Hola, quería preguntarte..."></div>
-    </div>
-
-    <!-- Teléfono -->
-    <div id="fields-telefono" class="hidden">
-      <div class="field"><label>Número de teléfono</label><input id="fTelefono" placeholder="+54 9 11 ..."></div>
-    </div>
-
-    <!-- SMS -->
-    <div id="fields-sms" class="hidden">
-      <div class="field"><label>Número de teléfono</label><input id="fSmsNumero" placeholder="+54 9 11 ..."></div>
-      <div class="field"><label>Mensaje (opcional)</label><input id="fSmsMensaje" placeholder="Hola, te escribo por..."></div>
-    </div>
-
-    <!-- Ubicación -->
-    <div id="fields-ubicacion" class="hidden">
-      <div class="field"><label>Latitud</label><input id="fLat" placeholder="-34.6037"></div>
-      <div class="field"><label>Longitud</label><input id="fLng" placeholder="-58.3816"></div>
-      <p class="sub" style="margin:-4px 0 0;">Tip: buscá el lugar en Google Maps, click derecho sobre el pin y copiá las coordenadas.</p>
-    </div>
-
-    <div class="err" id="modalErr"></div>
-    <div class="modal-actions">
-      <button class="btn ghost" id="modalCancel">Cancelar</button>
-      <button class="btn" id="modalSave">Guardar y generar</button>
     </div>
   </div>
 </div>

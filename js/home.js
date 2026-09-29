@@ -69,6 +69,8 @@ function abrirQrGratis(){
   document.getElementById("staticVPhone").value = "";
   document.getElementById("staticVEmail").value = "";
   document.getElementById("staticVOrg").value = "";
+  const codSel = document.getElementById("staticVPhoneCod");
+  if(codSel && !codSel.options.length){ codSel.innerHTML = opcionesCodigoPais("+54"); }
   document.getElementById("staticResult").classList.add("hidden");
   document.getElementById("staticDownload").classList.add("hidden");
   overlay.classList.remove("hidden");
@@ -102,7 +104,8 @@ document.getElementById("staticGenBtn").onclick = async ()=>{
   } else {
     const nombre = document.getElementById("staticVName").value.trim();
     if(!nombre) return;
-    const telefono = document.getElementById("staticVPhone").value.trim();
+    const telNum = document.getElementById("staticVPhone").value.trim();
+    const telefono = telNum ? `${document.getElementById("staticVPhoneCod").value} ${telNum}` : "";
     const email = document.getElementById("staticVEmail").value.trim();
     const org = document.getElementById("staticVOrg").value.trim();
     qrText = `BEGIN:VCARD\nVERSION:3.0\nFN:${nombre}\nORG:${org}\nTEL:${telefono}\nEMAIL:${email}\nEND:VCARD`;

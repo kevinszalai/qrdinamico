@@ -259,8 +259,94 @@ function initDashboard(){
       ["url","vcard","wifi","texto","email","telefono","sms","ubicacion"].forEach(t=>{
         document.getElementById("fields-"+t).classList.toggle("hidden", t!==currentType);
       });
+      actualizarPreview();
     };
   });
+
+  // ---- vista previa en vivo ----
+  function leerDestinoFormulario(){
+    switch(currentType){
+      case "url": return { url: document.getElementById("fUrl").value.trim() };
+      case "vcard": {
+        const telNum = document.getElementById("fVPhone").value.trim();
+        return {
+          nombre: document.getElementById("fVName").value.trim(),
+          telefono: telNum ? `${document.getElementById("fVPhoneCod").value} ${telNum}` : "",
+          email: document.getElementById("fVEmail").value.trim(),
+          org: document.getElementById("fVOrg").value.trim()
+        };
+      }
+      case "wifi": return {
+        ssid: document.getElementById("fWSsid").value.trim(),
+        password: document.getElementById("fWPass").value,
+        seguridad: document.getElementById("fWSec").value
+      };
+      case "texto": return { contenido: document.getElementById("fTexto").value.trim() };
+      case "email": return {
+        email: document.getElementById("fEmail").value.trim(),
+        asunto: document.getElementById("fEmailAsunto").value.trim(),
+        mensaje: document.getElementById("fEmailMensaje").value.trim()
+      };
+      case "telefono": {
+        const num = document.getElementById("fTelefono").value.trim();
+        return { numero: num ? `${document.getElementById("fTelefonoCod").value} ${num}` : "" };
+      }
+      case "sms": {
+        const num = document.getElementById("fSmsNumero").value.trim();
+        return {
+          numero: num ? `${document.getElementById("fSmsNumeroCod").value} ${num}` : "",
+          mensaje: document.getElementById("fSmsMensaje").value.trim()
+        };
+      }
+      case "ubicacion": return {
+        lat: document.getElementById("fLat").value.trim(),
+        lng: document.getElementById("fLng").value.trim()
+      };
+      default: return {};
+    }
+  }
+
+  function textoQrPreview(tipo, d){
+    switch(tipo){
+      case "url": return d.url ? (/^https?:\/\//i.test(d.url) ? d.url : "https://"+d.url) : "";
+      case "vcard": return d.nombre ? `BEGIN:VCARD\nVERSION:3.0\nFN:${d.nombre}\nORG:${d.org||""}\nTEL:${d.telefono||""}\nEMAIL:${d.email||""}\nEND:VCARD` : "";
+      case "wifi": return d.ssid ? `WIFI:T:${d.seguridad==="nopass"?"nopass":d.seguridad};S:${d.ssid};P:${d.password||""};;` : "";
+      case "texto": return d.contenido || "";
+      case "email": return d.email ? `mailto:${d.email}` : "";
+      case "telefono": return d.numero ? `tel:${d.numero}` : "";
+      case "sms": return d.numero ? `sms:${d.numero}` : "";
+      case "ubicacion": return (d.lat && d.lng) ? `geo:${d.lat},${d.lng}` : "";
+      default: return "";
+    }
+  }
+
+  let previewDebounce;
+  function actualizarPreview(){
+    clearTimeout(previewDebounce);
+    previewDebounce = setTimeout(async ()=>{
+      const tagEl = document.getElementById("previewTag");
+      tagEl.textContent = currentType;
+      tagEl.className = "tag " + currentType;
+      document.getElementById("previewNombre").textContent = document.getElementById("fNombre").value.trim() || "Sin nombre";
+
+      const d = leerDestinoFormulario();
+      document.getElementById("previewDest").textContent = destinoPreview({ tipo: currentType, destino: d }) || "Completá los datos…";
+
+      const texto = textoQrPreview(currentType, d);
+      const holder = document.getElementById("previewQrHolder");
+      if(!texto){
+        holder.innerHTML = '<span style="font-size:11px; color:var(--ink-soft); text-align:center; padding:10px;">Completá los datos para ver el QR</span>';
+        return;
+      }
+      if(typeof QRCode === "undefined"){
+        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js");
+      }
+      holder.innerHTML = "";
+      new QRCode(holder, { text: texto, width:150, height:150, colorDark:"#14171B", colorLight:"#ffffff", correctLevel: QRCode.CorrectLevel.M });
+    }, 250);
+  }
+  document.querySelector(".modal-form").addEventListener("input", actualizarPreview);
+  document.querySelector(".modal-form").addEventListener("change", actualizarPreview);
 
   function openModal(existing, id){
     editingId = id || null;
@@ -270,10 +356,20 @@ function initDashboard(){
     document.querySelectorAll(".typebtn[data-type]").forEach(b=> b.classList.toggle("active", b.dataset.type===currentType));
     ["url","vcard","wifi","texto","email","telefono","sms","ubicacion"].forEach(t=> document.getElementById("fields-"+t).classList.toggle("hidden", t!==currentType));
 
+    ["fVPhoneCod","fTelefonoCod","fSmsNumeroCod"].forEach(id=>{
+      const sel = document.getElementById(id);
+      if(!sel.options.length){ sel.innerHTML = opcionesCodigoPais("+54"); }
+    });
+
+    const telV = separarCodigoTelefono(existing?.destino?.telefono);
+    const telT = separarCodigoTelefono(existing?.tipo === "telefono" ? existing?.destino?.numero : null);
+    const telS = separarCodigoTelefono(existing?.tipo === "sms" ? existing?.destino?.numero : null);
+
     document.getElementById("fNombre").value = existing?.nombre || "";
     document.getElementById("fUrl").value = existing?.destino?.url || "";
     document.getElementById("fVName").value = existing?.destino?.nombre || "";
-    document.getElementById("fVPhone").value = existing?.destino?.telefono || "";
+    document.getElementById("fVPhoneCod").value = telV.cod;
+    document.getElementById("fVPhone").value = existing?.destino?.telefono ? telV.numero : "";
     document.getElementById("fVEmail").value = existing?.destino?.email || "";
     document.getElementById("fVOrg").value = existing?.destino?.org || "";
     document.getElementById("fWSsid").value = existing?.destino?.ssid || "";
@@ -283,13 +379,16 @@ function initDashboard(){
     document.getElementById("fEmail").value = existing?.destino?.email || "";
     document.getElementById("fEmailAsunto").value = existing?.destino?.asunto || "";
     document.getElementById("fEmailMensaje").value = existing?.destino?.mensaje || "";
-    document.getElementById("fTelefono").value = existing?.destino?.numero || "";
-    document.getElementById("fSmsNumero").value = existing?.destino?.numero || "";
+    document.getElementById("fTelefonoCod").value = telT.cod;
+    document.getElementById("fTelefono").value = (existing?.tipo === "telefono" && existing?.destino?.numero) ? telT.numero : "";
+    document.getElementById("fSmsNumeroCod").value = telS.cod;
+    document.getElementById("fSmsNumero").value = (existing?.tipo === "sms" && existing?.destino?.numero) ? telS.numero : "";
     document.getElementById("fSmsMensaje").value = existing?.destino?.mensaje || "";
     document.getElementById("fLat").value = existing?.destino?.lat || "";
     document.getElementById("fLng").value = existing?.destino?.lng || "";
 
     overlay.classList.remove("hidden");
+    actualizarPreview();
   }
   function closeModal(){ overlay.classList.add("hidden"); editingId = null; }
 
@@ -307,9 +406,10 @@ function initDashboard(){
     } else if(currentType === "vcard"){
       const nombreV = document.getElementById("fVName").value.trim();
       if(!nombreV){ errEl.textContent = "Falta el nombre del contacto."; return; }
+      const telVNum = document.getElementById("fVPhone").value.trim();
       destino = {
         nombre: nombreV,
-        telefono: document.getElementById("fVPhone").value.trim(),
+        telefono: telVNum ? `${document.getElementById("fVPhoneCod").value} ${telVNum}` : "",
         email: document.getElementById("fVEmail").value.trim(),
         org: document.getElementById("fVOrg").value.trim()
       };
@@ -336,11 +436,11 @@ function initDashboard(){
     } else if(currentType === "telefono"){
       const numero = document.getElementById("fTelefono").value.trim();
       if(!numero){ errEl.textContent = "Falta el número de teléfono."; return; }
-      destino = { numero };
+      destino = { numero: `${document.getElementById("fTelefonoCod").value} ${numero}` };
     } else if(currentType === "sms"){
       const numero = document.getElementById("fSmsNumero").value.trim();
       if(!numero){ errEl.textContent = "Falta el número de teléfono."; return; }
-      destino = { numero, mensaje: document.getElementById("fSmsMensaje").value.trim() };
+      destino = { numero: `${document.getElementById("fSmsNumeroCod").value} ${numero}`, mensaje: document.getElementById("fSmsMensaje").value.trim() };
     } else if(currentType === "ubicacion"){
       const lat = document.getElementById("fLat").value.trim();
       const lng = document.getElementById("fLng").value.trim();

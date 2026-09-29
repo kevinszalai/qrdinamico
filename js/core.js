@@ -1,4 +1,40 @@
 /* Módulo Core: helpers compartidos (matriz decorativa, carga de scripts, parseo de Firestore REST, mensajes de error) */
+
+const CODIGOS_PAIS = [
+  { cod:"+54", pais:"Argentina" },
+  { cod:"+598", pais:"Uruguay" },
+  { cod:"+56", pais:"Chile" },
+  { cod:"+595", pais:"Paraguay" },
+  { cod:"+591", pais:"Bolivia" },
+  { cod:"+51", pais:"Perú" },
+  { cod:"+57", pais:"Colombia" },
+  { cod:"+58", pais:"Venezuela" },
+  { cod:"+593", pais:"Ecuador" },
+  { cod:"+52", pais:"México" },
+  { cod:"+34", pais:"España" },
+  { cod:"+1", pais:"Estados Unidos" },
+  { cod:"+55", pais:"Brasil" },
+];
+
+function opcionesCodigoPais(seleccionado){
+  return CODIGOS_PAIS.map(c=>
+    `<option value="${c.cod}" ${c.cod===seleccionado?"selected":""}>${c.cod} ${c.pais}</option>`
+  ).join("");
+}
+
+// Separa "+54 11 5555-5555" en { cod:"+54", numero:"11 5555-5555" }.
+// Si no reconoce el código, deja Argentina por default y el texto completo en el número.
+function separarCodigoTelefono(valor){
+  valor = (valor || "").trim();
+  const match = CODIGOS_PAIS
+    .slice().sort((a,b)=> b.cod.length - a.cod.length)
+    .find(c=> valor.startsWith(c.cod));
+  if(match){
+    return { cod: match.cod, numero: valor.slice(match.cod.length).trim() };
+  }
+  return { cod: "+54", numero: valor };
+}
+
 function paintMatrix(el){
   if(!el) return;
   el.innerHTML = "";
